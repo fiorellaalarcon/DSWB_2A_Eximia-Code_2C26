@@ -1,0 +1,11 @@
+# Dependencias instaladas por npm.
+# No se suben al repositorio porque pueden reinstalarse
+# utilizando npm install.
+node_modules/
+
+# Archivos que pueden contener variables privadas.
+.env
+
+# Archivos generados por algunos sistemas operativos.
+.DS_Store
+Thumbs.db

@@ -1,0 +1,27 @@
+{
+  "name": "dswb_2a_eximia-code_2c26",
+  "version": "1.0.0",
+  "description": "Desarrollo de Sistemas Web (Back End) - 2° A 2C2026. Caso 2: Distribución de Pedidos — FreshRoute. Empresa de Desarrollo Eximia Code. Integrantes: Alarcón, Fiorella Melina; Alva, Axel Roni; Churquina, Javier; Jasque Cano, Malena Concepción.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "pug",
+    "mvc",
+    "backend"
+  ],
+  "author": "Grupo 30 - Eximia Code",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "pug": "^3.0.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
