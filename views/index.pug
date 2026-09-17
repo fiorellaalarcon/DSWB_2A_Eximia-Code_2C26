@@ -1,0 +1,53 @@
+extends layout
+
+block content
+  section.hero
+    h2 API de distribución de pedidos
+    p
+      | Proyecto del Caso 2: FreshRoute. Esta interfaz es únicamente una
+      | presentación mínima; la funcionalidad principal se encuentra en la API REST.
+
+  section
+    h2 Módulos implementados
+    ul
+      li Clientes — CRUD + persistencia JSON.
+      li Productos — CRUD + persistencia JSON + búsqueda por nombre.
+      li Pedidos — CRUD + estados + validaciones + filtros por cliente/estado.
+
+  section
+    h2 Endpoints principales
+    table
+      thead
+        tr
+          th Método
+          th Endpoint
+          th Función
+      tbody
+        tr
+          td GET
+          td /api/clientes
+          td Listar clientes
+        tr
+          td POST
+          td /api/clientes
+          td Crear cliente
+        tr
+          td GET
+          td /api/productos?nombre=tomate
+          td Buscar productos
+        tr
+          td POST
+          td /api/productos
+          td Crear producto
+        tr
+          td GET
+          td /api/pedidos?estado=Pendiente
+          td Filtrar pedidos
+        tr
+          td POST
+          td /api/pedidos
+          td Crear pedido
+        tr
+          td PATCH
+          td /api/pedidos/1/estado
+          td Cambiar estado
