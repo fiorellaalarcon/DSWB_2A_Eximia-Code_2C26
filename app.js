@@ -17,13 +17,13 @@
 const express = require("express");
 
 // Importamos las rutas correspondientes a cada módulo.
-const clientesRoutes = require("./routes/clientes.routes");
+//const clientesRoutes = require("./routes/clientes.routes");
 const productosRoutes = require("./routes/productos.routes");
-const pedidosRoutes = require("./routes/pedidos.routes");
+//const pedidosRoutes = require("./routes/pedidos.routes");
 
 // Importamos nuestros middlewares.
 const logger = require("./middlewares/logger");
-const errorHandler = require("./middlewares/errorHandler");
+const errorHandler = require("./middlewares/error.js");
 
 // Creamos la aplicación Express.
 const app = express();
@@ -83,7 +83,7 @@ app.get("/", (req, res) => {
 
 // Todas las rutas relacionadas con clientes comenzarán con:
 // /api/clientes
-app.use("/api/clientes", clientesRoutes);
+//app.use("/api/clientes", clientesRoutes);
 
 // Todas las rutas relacionadas con productos comenzarán con:
 // /api/productos
@@ -91,7 +91,7 @@ app.use("/api/productos", productosRoutes);
 
 // Todas las rutas relacionadas con pedidos comenzarán con:
 // /api/pedidos
-app.use("/api/pedidos", pedidosRoutes);
+//app.use("/api/pedidos", pedidosRoutes);
 
 // ============================================================
 // MANEJO DE RUTAS INEXISTENTES
