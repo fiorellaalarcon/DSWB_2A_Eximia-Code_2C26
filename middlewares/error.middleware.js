@@ -1,24 +1,17 @@
 // ============================================================
-// ERROR HANDLER
+// MIDDLEWARE DE MANEJO DE ERRORES
 // ============================================================
 //
-// Middleware encargado de manejar errores internos de la
-// aplicación.
-//
-// Las validaciones específicas de cada recurso se realizan
-// dentro de sus respectivos controllers, de acuerdo con la
-// aclaración realizada por el docente.
+// Recibe los errores derivados de los controladores y evita
+// repetir la misma lógica de respuesta en cada ruta.
 // ============================================================
 
-function errorHandler(err, req, res, next) {
+function errorHandler(error, req, res, next) {
 
-    // Mostramos el error en la consola para facilitar
-    // la detección de problemas durante el desarrollo.
-    console.error(err);
+    console.error(error);
 
-    // Respondemos al cliente utilizando el código HTTP 500.
     res.status(500).json({
-        error: "Error interno del servidor"
+        error: "Error interno del servidor."
     });
 }
 
