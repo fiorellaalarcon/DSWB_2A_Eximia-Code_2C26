@@ -6,30 +6,39 @@
 // Express de FreshRoute.
 //
 // Arquitectura utilizada:
-// Cliente → Routes → Controllers → Models → JSON
+// Cliente → Routes → Controllers → Models → JSON Storage
 //
 // Se utiliza MVC para separar responsabilidades.
 //
 // ============================================================
 
-// Importamos Express.
-// Express permite crear el servidor y definir las rutas HTTP.
+// Importamos los módulos necesarios de Node.js y Express.
 const express = require("express");
+const path = require("path");
 
-// Importamos las rutas correspondientes a cada módulo.
-//const clientesRoutes = require("./routes/clientes.routes");
+// ============================================================
+// IMPORTACIÓN DE RUTAS
+// ============================================================
+
+const clientesRoutes = require("./routes/clientes.routes");
 const productosRoutes = require("./routes/productos.routes");
-//const pedidosRoutes = require("./routes/pedidos.routes");
+const pedidosRoutes = require("./routes/pedidos.routes");
 
-// Importamos nuestros middlewares.
-const logger = require("./middlewares/logger");
-const errorHandler = require("./middlewares/error.js");
+// ============================================================
+// IMPORTACIÓN DE MIDDLEWARES
+// ============================================================
 
-// Creamos la aplicación Express.
+const loggerMiddleware = require("./middlewares/logger.middleware");
+const errorMiddleware = require("./middlewares/error.middleware");
+
+// ============================================================
+// CONFIGURACIÓN DE LA APLICACIÓN
+// ============================================================
+
 const app = express();
 
-// Puerto donde funcionará el servidor.
-const PORT = 3000;
+// Puerto donde funcionará el servidor (usa variable de entorno o 3000 por defecto).
+const PORT = process.env.PORT || 3000;
 
 // ============================================================
 // MIDDLEWARES GENERALES
@@ -40,89 +49,80 @@ const PORT = 3000;
 //
 // Por ejemplo, en un POST:
 // {
-//   "nombre": "Tomate",
-//   "precio": 1500
+//    "nombre": "Tomate",
+//    "precio": 1500
 // }
 app.use(express.json());
 
-// Permite procesar información enviada mediante formularios.
+// Permite procesar información enviada mediante formularios (URL-encoded).
 app.use(express.urlencoded({ extended: true }));
 
+// Permite servir archivos estáticos (CSS, JS del cliente, imágenes) desde la carpeta /public.
+app.use(express.static(path.join(__dirname, "public")));
+
 // Middleware propio para registrar las solicitudes recibidas.
-app.use(logger);
+app.use(loggerMiddleware);
 
 // ============================================================
-// CONFIGURACIÓN DE PUG
+// CONFIGURACIÓN DE PUG (MOTOR DE PLANTILLAS)
 // ============================================================
 
 // Indicamos que Pug será el motor de plantillas.
 app.set("view engine", "pug");
 
-// Indicamos la carpeta donde se encuentran las vistas.
-app.set("views", "./views");
+// Indicamos la ruta absoluta de la carpeta de vistas usando path.
+app.set("views", path.join(__dirname, "views"));
 
 // ============================================================
 // RUTA PRINCIPAL
 // ============================================================
 
-// La ruta "/" utiliza Pug para mostrar una página sencilla.
+// La ruta "/" utiliza Pug para mostrar una página de presentación.
 // No reemplaza a nuestra API REST; solamente permite demostrar
 // el uso del motor de plantillas solicitado en la consigna.
 app.get("/", (req, res) => {
-
     res.render("index", {
         titulo: "FreshRoute",
         mensaje: "Sistema de distribución de pedidos"
     });
-
 });
 
 // ============================================================
-// RUTAS DE LA API
+// RUTAS DE LA API REST
 // ============================================================
 
-// Todas las rutas relacionadas con clientes comenzarán con:
-// /api/clientes
-//app.use("/api/clientes", clientesRoutes);
-
-// Todas las rutas relacionadas con productos comenzarán con:
-// /api/productos
+// Todas las rutas de los módulos principales del sistema:
+app.use("/api/clientes", clientesRoutes);
 app.use("/api/productos", productosRoutes);
-
-// Todas las rutas relacionadas con pedidos comenzarán con:
-// /api/pedidos
-//app.use("/api/pedidos", pedidosRoutes);
+app.use("/api/pedidos", pedidosRoutes);
 
 // ============================================================
-// MANEJO DE RUTAS INEXISTENTES
+// MANEJO DE RUTAS INEXISTENTES (404)
 // ============================================================
 
-// Si ninguna de las rutas anteriores coincide con la solicitud,
-// devolvemos un código HTTP 404.
+// Si ninguna de las rutas anteriores coincide, devolvemos un 404
+// indicando además qué URL fue la que falló.
 app.use((req, res) => {
-
     res.status(404).json({
-        error: "Ruta no encontrada"
+        error: "Ruta no encontrada",
+        ruta: req.originalUrl
     });
-
 });
 
 // ============================================================
-// MANEJO DE ERRORES
+// MANEJO DE ERRORES CENTRALIZADO
 // ============================================================
 
-// Este middleware recibe los errores que se produzcan
-// durante la ejecución de la aplicación.
-app.use(errorHandler);
+// Este middleware recibe los errores internos que se produzcan
+// durante la ejecución de los controladores o servicios.
+app.use(errorMiddleware);
 
 // ============================================================
 // INICIAR SERVIDOR
 // ============================================================
 
 app.listen(PORT, () => {
-
     console.log(
         `FreshRoute ejecutándose en http://localhost:${PORT}`
     );
-
 });
