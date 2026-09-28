@@ -1,26 +1,34 @@
-const { Router } = require("express");
+// ============================================================
+// RUTAS PRODUCTOS
+// ============================================================
+//
+// Define los endpoints HTTP correspondientes al módulo
+// Productos.
+//
+// La lógica se encuentra en productos.controller.js.
+// ============================================================
 
-const router = Router();
+const express = require("express");
 
-const {
-    obtenerProductos,
-    obtenerProductoPorId,
-    agregarProducto,
-    actualizarProducto,
-    eliminarProducto
-} = require("../controllers/productos.controller.js");
+const router = express.Router();
 
-router.get("/", obtenerProductos);
+const controller = require("../controllers/productos.controller");
 
-router.get("/:id", obtenerProductoPorId);
+// GET /api/productos
+// También permite:
+// GET /api/productos?nombre=Tomate
+router.get("/", controller.obtenerProductos);
 
-router.post("/", agregarProducto);
+// GET /api/productos/:id
+router.get("/:id", controller.obtenerProductoPorId);
 
-router.put("/:id", actualizarProducto);
+// POST /api/productos
+router.post("/", controller.crearProducto);
 
-router.delete("/:id", eliminarProducto);
+// PUT /api/productos/:id
+router.put("/:id", controller.actualizarProducto);
 
-
-
+// DELETE /api/productos/:id
+router.delete("/:id", controller.eliminarProducto);
 
 module.exports = router;

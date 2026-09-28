@@ -118,8 +118,7 @@ POST `http://localhost:3000/api/productos`
 {
   "nombre": "Papa",
   "descripcion": "Papa fresca",
-  "precio": 2200,
-  "stock": 30
+  "precio": 2200
 }
 ```
 
