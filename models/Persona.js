@@ -6,23 +6,38 @@
 //
 // Se utiliza como superclase para aplicar el concepto de
 // herencia de Programación Orientada a Objetos.
+//
+// Las clases específicas, como Cliente, pueden heredar
+// sus atributos y métodos.
 // ============================================================
 
 class Persona {
 
-    constructor(id, nombre, apellido, email) {
+    constructor(id, nombre, email) {
+
+        // Validación de los atributos comunes.
+        if (!nombre || typeof nombre !== "string" || !nombre.trim()) {
+            throw new Error("El nombre es obligatorio.");
+        }
+
+        if (!email || typeof email !== "string" || !email.trim()) {
+            throw new Error("El email es obligatorio.");
+        }
 
         this.id = id;
-        this.nombre = nombre;
-        this.apellido = apellido;
-        this.email = email;
+        this.nombre = nombre.trim();
+        this.email = email.trim();
     }
 
-    // Método heredable por las clases hijas.
-    obtenerNombreCompleto() {
+    // ========================================================
+    // MÉTODO HEREDABLE
+    // ========================================================
+    //
+    // Puede ser utilizado por las clases que hereden de Persona.
+    // ========================================================
 
-        return `${this.nombre} ${this.apellido}`;
-
+    obtenerInformacionBasica() {
+        return `${this.nombre} (${this.email})`;
     }
 }
 

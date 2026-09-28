@@ -2,39 +2,48 @@
 // RUTAS DE CLIENTES
 // ============================================================
 //
-// Este archivo define las rutas HTTP del recurso Clientes.
+// Define los endpoints REST del módulo Clientes.
 //
-// La ruta base se establece en app.js:
-//
-// /api/clientes
-//
-// Por lo tanto:
-// GET    /api/clientes
-// GET    /api/clientes/:id
-// POST   /api/clientes
-// PUT    /api/clientes/:id
-// DELETE /api/clientes/:id
+// La lógica de cada operación se encuentra en:
+// controllers/clientes.controller.js
 // ============================================================
 
 const express = require("express");
 
 const router = express.Router();
 
-const controller = require("../controllers/clientes.controller");
+const controller =
+    require("../controllers/clientes.controller");
 
-// Obtener todos.
-router.get("/", controller.obtenerClientes);
+// ============================================================
+// GET
+// ============================================================
 
-// Obtener por ID.
-router.get("/:id", controller.obtenerClientePorId);
+// GET /api/clientes
+router.get("/", controller.listar);
 
-// Crear.
-router.post("/", controller.crearCliente);
+// GET /api/clientes/:id
+router.get("/:id", controller.obtenerPorId);
 
-// Actualizar.
-router.put("/:id", controller.actualizarCliente);
+// ============================================================
+// POST
+// ============================================================
 
-// Eliminar.
-router.delete("/:id", controller.eliminarCliente);
+// POST /api/clientes
+router.post("/", controller.crear);
+
+// ============================================================
+// PUT
+// ============================================================
+
+// PUT /api/clientes/:id
+router.put("/:id", controller.actualizar);
+
+// ============================================================
+// DELETE
+// ============================================================
+
+// DELETE /api/clientes/:id
+router.delete("/:id", controller.eliminar);
 
 module.exports = router;

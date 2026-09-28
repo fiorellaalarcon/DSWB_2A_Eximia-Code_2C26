@@ -1,218 +1,328 @@
 // ============================================================
-// CONTROLLER DE CLIENTES
+// CONTROLADOR DE CLIENTES
 // ============================================================
 //
-// Este archivo contiene la lógica correspondiente al módulo
-// Clientes.
+// Contiene la lógica HTTP correspondiente al módulo Clientes.
 //
-// El controller se encarga de recibir la solicitud desde las
-// rutas, procesar los datos y devolver una respuesta HTTP.
-//
-// La persistencia se realiza en clientes.json.
+// Responsabilidades:
+// - Consultar clientes.
+// - Crear clientes.
+// - Actualizar clientes.
+// - Eliminar clientes.
+// - Validar datos recibidos.
+// - Verificar emails duplicados.
+// - Utilizar el modelo Cliente.
+// - Utilizar jsonStorage.js para la persistencia.
 // ============================================================
 
-const fs = require("fs");
-const path = require("path");
+const {
+    readJson,
+    writeJson
+} = require("../utils/jsonStorage");
 
 const Cliente = require("../models/Cliente");
 
-// Ruta absoluta al archivo JSON.
-const archivo = path.join(
-    __dirname,
-    "../data/clientes.json"
-);
+const FILE = "clientes.json";
 
-// ------------------------------------------------------------
-// FUNCIÓN AUXILIAR PARA LEER CLIENTES
-// ------------------------------------------------------------
-
-function leerClientes() {
-
-    const datos = fs.readFileSync(archivo, "utf-8");
-
-    return JSON.parse(datos);
-}
-
-// ------------------------------------------------------------
-// FUNCIÓN AUXILIAR PARA GUARDAR CLIENTES
-// ------------------------------------------------------------
-
-function guardarClientes(clientes) {
-
-    fs.writeFileSync(
-        archivo,
-        JSON.stringify(clientes, null, 4)
-    );
-}
-
-// ------------------------------------------------------------
+// ============================================================
 // GET /api/clientes
-// Obtener todos los clientes.
-// ------------------------------------------------------------
+// ============================================================
 
-function obtenerClientes(req, res) {
+async function listar(req, res, next) {
 
-    const clientes = leerClientes();
+    try {
 
-    res.status(200).json(clientes);
+        const clientes = await readJson(FILE);
+
+        res.status(200).json(clientes);
+
+    } catch (error) {
+
+        next(error);
+    }
 }
 
-// ------------------------------------------------------------
+// ============================================================
 // GET /api/clientes/:id
-// Obtener un cliente específico.
-// ------------------------------------------------------------
+// ============================================================
 
-function obtenerClientePorId(req, res) {
+async function obtenerPorId(req, res, next) {
 
-    // req.params permite obtener el parámetro dinámico :id.
-    const id = Number(req.params.id);
+    try {
 
-    const clientes = leerClientes();
+        const id = Number(req.params.id);
 
-    const cliente = clientes.find(
-        cliente => cliente.id === id
-    );
+        // Validamos que el ID tenga formato correcto.
+        if (!Number.isInteger(id) || id <= 0) {
 
-    // Si no existe, respondemos 404.
-    if (!cliente) {
+            return res.status(400).json({
+                error: "El ID del cliente debe ser un número entero positivo."
+            });
+        }
 
-        return res.status(404).json({
-            error: "Cliente no encontrado"
-        });
+        const clientes = await readJson(FILE);
+
+        const cliente = clientes.find(
+            cliente => cliente.id === id
+        );
+
+        if (!cliente) {
+
+            return res.status(404).json({
+                error: "Cliente no encontrado."
+            });
+        }
+
+        res.status(200).json(cliente);
+
+    } catch (error) {
+
+        next(error);
     }
-
-    res.status(200).json(cliente);
 }
 
-// ------------------------------------------------------------
+// ============================================================
 // POST /api/clientes
-// Crear un nuevo cliente.
-// ------------------------------------------------------------
+// ============================================================
 
-function crearCliente(req, res) {
+async function crear(req, res, next) {
 
-    const {
-        nombre,
-        apellido,
-        email,
-        empresa
-    } = req.body;
+    try {
 
-    // Validación de campos obligatorios.
-    if (!nombre || !email || !empresa) {
+        const {
+            nombre,
+            email,
+            direccion,
+            telefono
+        } = req.body;
 
-        return res.status(400).json({
-            error: "Nombre, email y empresa son obligatorios"
-        });
+        const clientes = await readJson(FILE);
+
+        // ----------------------------------------------------
+        // Verificar email duplicado.
+        // ----------------------------------------------------
+
+        if (email) {
+
+            const emailNormalizado =
+                email.trim().toLowerCase();
+
+            const emailExiste = clientes.some(
+                cliente =>
+                    cliente.email.toLowerCase() ===
+                    emailNormalizado
+            );
+
+            if (emailExiste) {
+
+                return res.status(409).json({
+                    error:
+                        "Ya existe un cliente registrado con ese email."
+                });
+            }
+        }
+
+        // ----------------------------------------------------
+        // Generar ID automático.
+        // ----------------------------------------------------
+
+        const nuevoId = clientes.length > 0
+            ? Math.max(
+                ...clientes.map(cliente => cliente.id)
+            ) + 1
+            : 1;
+
+        // ----------------------------------------------------
+        // Crear instancia del modelo Cliente.
+        //
+        // Cliente hereda de Persona.
+        // ----------------------------------------------------
+
+        const nuevoCliente = new Cliente(
+            nuevoId,
+            nombre,
+            email,
+            direccion,
+            telefono
+        );
+
+        clientes.push(nuevoCliente);
+
+        await writeJson(FILE, clientes);
+
+        res.status(201).json(nuevoCliente);
+
+    } catch (error) {
+
+        // Los errores de validación de los modelos
+        // corresponden a datos incorrectos enviados por el cliente.
+
+        if (
+            error.message.includes("obligatorio")
+        ) {
+
+            return res.status(400).json({
+                error: error.message
+            });
+        }
+
+        next(error);
     }
-
-    const clientes = leerClientes();
-
-    // Generamos un nuevo ID.
-    const nuevoId = clientes.length > 0
-        ? Math.max(...clientes.map(c => c.id)) + 1
-        : 1;
-
-    const nuevoCliente = new Cliente(
-        nuevoId,
-        nombre,
-        apellido || "",
-        email,
-        empresa
-    );
-
-    clientes.push(nuevoCliente);
-
-    guardarClientes(clientes);
-
-    res.status(201).json(nuevoCliente);
 }
 
-// ------------------------------------------------------------
+// ============================================================
 // PUT /api/clientes/:id
-// Actualizar un cliente existente.
-// ------------------------------------------------------------
+// ============================================================
 
-function actualizarCliente(req, res) {
+async function actualizar(req, res, next) {
 
-    const id = Number(req.params.id);
+    try {
 
-    const clientes = leerClientes();
+        const id = Number(req.params.id);
 
-    const indice = clientes.findIndex(
-        cliente => cliente.id === id
-    );
+        if (!Number.isInteger(id) || id <= 0) {
 
-    if (indice === -1) {
+            return res.status(400).json({
+                error:
+                    "El ID del cliente debe ser un número entero positivo."
+            });
+        }
 
-        return res.status(404).json({
-            error: "Cliente no encontrado"
-        });
+        const {
+            nombre,
+            email,
+            direccion,
+            telefono
+        } = req.body;
+
+        const clientes = await readJson(FILE);
+
+        const index = clientes.findIndex(
+            cliente => cliente.id === id
+        );
+
+        if (index === -1) {
+
+            return res.status(404).json({
+                error: "Cliente no encontrado."
+            });
+        }
+
+        // ----------------------------------------------------
+        // Verificar email duplicado.
+        //
+        // Se excluye al propio cliente que estamos modificando.
+        // ----------------------------------------------------
+
+        if (email) {
+
+            const emailNormalizado =
+                email.trim().toLowerCase();
+
+            const emailExiste = clientes.some(
+                cliente =>
+                    cliente.id !== id &&
+                    cliente.email.toLowerCase() ===
+                    emailNormalizado
+            );
+
+            if (emailExiste) {
+
+                return res.status(409).json({
+                    error:
+                        "Ya existe otro cliente registrado con ese email."
+                });
+            }
+        }
+
+        // ----------------------------------------------------
+        // Crear nueva instancia del modelo.
+        // ----------------------------------------------------
+
+        const clienteActualizado = new Cliente(
+            id,
+            nombre,
+            email,
+            direccion,
+            telefono
+        );
+
+        clientes[index] = clienteActualizado;
+
+        await writeJson(FILE, clientes);
+
+        res.status(200).json(clienteActualizado);
+
+    } catch (error) {
+
+        if (
+            error.message.includes("obligatorio")
+        ) {
+
+            return res.status(400).json({
+                error: error.message
+            });
+        }
+
+        next(error);
     }
-
-    const {
-        nombre,
-        apellido,
-        email,
-        empresa
-    } = req.body;
-
-    if (!nombre || !email || !empresa) {
-
-        return res.status(400).json({
-            error: "Nombre, email y empresa son obligatorios"
-        });
-    }
-
-    clientes[indice] = {
-        id,
-        nombre,
-        apellido: apellido || "",
-        email,
-        empresa
-    };
-
-    guardarClientes(clientes);
-
-    res.status(200).json(clientes[indice]);
 }
 
-// ------------------------------------------------------------
+// ============================================================
 // DELETE /api/clientes/:id
-// Eliminar un cliente.
-// ------------------------------------------------------------
+// ============================================================
 
-function eliminarCliente(req, res) {
+async function eliminar(req, res, next) {
 
-    const id = Number(req.params.id);
+    try {
 
-    const clientes = leerClientes();
+        const id = Number(req.params.id);
 
-    const indice = clientes.findIndex(
-        cliente => cliente.id === id
-    );
+        if (!Number.isInteger(id) || id <= 0) {
 
-    if (indice === -1) {
+            return res.status(400).json({
+                error:
+                    "El ID del cliente debe ser un número entero positivo."
+            });
+        }
 
-        return res.status(404).json({
-            error: "Cliente no encontrado"
+        const clientes = await readJson(FILE);
+
+        const index = clientes.findIndex(
+            cliente => cliente.id === id
+        );
+
+        if (index === -1) {
+
+            return res.status(404).json({
+                error: "Cliente no encontrado."
+            });
+        }
+
+        const eliminado =
+            clientes.splice(index, 1)[0];
+
+        await writeJson(FILE, clientes);
+
+        res.status(200).json({
+            mensaje: "Cliente eliminado correctamente.",
+            cliente: eliminado
         });
+
+    } catch (error) {
+
+        next(error);
     }
-
-    const eliminado = clientes.splice(indice, 1)[0];
-
-    guardarClientes(clientes);
-
-    res.status(200).json({
-        mensaje: "Cliente eliminado correctamente",
-        cliente: eliminado
-    });
 }
+
+// ============================================================
+// EXPORTAR CONTROLADORES
+// ============================================================
 
 module.exports = {
-    obtenerClientes,
-    obtenerClientePorId,
-    crearCliente,
-    actualizarCliente,
-    eliminarCliente
+    listar,
+    obtenerPorId,
+    crear,
+    actualizar,
+    eliminar
 };
