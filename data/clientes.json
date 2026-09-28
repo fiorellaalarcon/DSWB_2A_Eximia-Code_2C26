@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "nombre": "Restaurante Central",
+    "email": "central@freshroute.test",
+    "direccion": "Av. Corrientes 1350",
+    "telefono": "1155552222"
+  },
+  {
+    "id": 2,
+    "nombre": "Restaurante Norte",
+    "email": "norte@freshroute.test",
+    "direccion": "Av. Santa Fe 2000",
+    "telefono": "1144442222"
+  },
+  {
+    "id": 3,
+    "nombre": "Restaurante Mary",
+    "email": "maryrestaurent@freshroute.test",
+    "direccion": "Av. Mitre 557",
+    "telefono": "1144442222"
+  },
+  {
+    "id": 4,
+    "nombre": "Restaurante Juan",
+    "email": "Juanrestaurante@freshroute.test",
+    "direccion": "Av. Mitre 587",
+    "telefono": "1188782222"
+  }
+]
