@@ -1,1 +1,72 @@
-[{"id":1,"nombre":"heladera","precio":5000}]
+[
+  {
+    "id": 1,
+    "nombre": "Hamburguesa Clásica",
+    "precio": 8500,
+    "categoria": "Hamburguesas",
+    "stock": 20
+  },
+  {
+    "id": 2,
+    "nombre": "Pizza Napolitana",
+    "precio": 12000,
+    "categoria": "Pizzas",
+    "stock": 15
+  },
+  {
+    "id": 3,
+    "nombre": "Pasta Bolognesa",
+    "precio": 9500,
+    "categoria": "Pastas",
+    "stock": 12
+  },
+  {
+    "id": 4,
+    "nombre": "Milanesa con Papas",
+    "precio": 10500,
+    "categoria": "Platos principales",
+    "stock": 18
+  },
+  {
+    "id": 5,
+    "nombre": "Ensalada César",
+    "precio": 7500,
+    "categoria": "Ensaladas",
+    "stock": 10
+  },
+  {
+    "id": 6,
+    "nombre": "Tacos de Carne",
+    "precio": 9000,
+    "categoria": "Mexicana",
+    "stock": 14
+  },
+  {
+    "id": 7,
+    "nombre": "Sushi Variado",
+    "precio": 14000,
+    "categoria": "Sushi",
+    "stock": 8
+  },
+  {
+    "id": 8,
+    "nombre": "Pollo Grillado",
+    "precio": 11000,
+    "categoria": "Platos principales",
+    "stock": 16
+  },
+  {
+    "id": 9,
+    "nombre": "Ravioles de Ricota",
+    "precio": 9800,
+    "categoria": "Pastas",
+    "stock": 11
+  },
+  {
+    "id": 10,
+    "nombre": "Cheesecake de Frutos Rojos",
+    "precio": 6500,
+    "categoria": "Postres",
+    "stock": 9
+  }
+]
