@@ -6,6 +6,8 @@ node_modules/
 # Archivos que pueden contener variables privadas.
 .env
 
+npm-debug.log*
+
 # Archivos generados por algunos sistemas operativos.
 .DS_Store
 Thumbs.db
