@@ -1,394 +1,219 @@
-// ============================================================
-// CONTROLLER DE PEDIDOS
-// ============================================================
-// Contiene la lógica de negocio relacionada con los pedidos.
-//
-// En este módulo se implementan:
-// - CRUD.
-// - Validaciones.
-// - Estados.
-// - Transiciones de estado.
-// - Consultas por cliente.
-// - Consultas por estado.
-// - Verificación de existencia de clientes y productos.
-// ============================================================
-
-const fs = require("fs");
 const path = require("path");
+
 const Pedido = require("../models/Pedido");
+const { leerJSON, guardarJSON } = require("../utils/jsonStorage");
+
+const ARCHIVO_PEDIDOS = path.join(__dirname, "../data/pedidos.json");
 
 // ============================================================
-// ARCHIVOS JSON UTILIZADOS COMO PERSISTENCIA
+// OBTENER TODOS LOS PEDIDOS
 // ============================================================
 
-const pedidosArchivo = path.join(
-    __dirname,
-    "../data/pedidos.json"
-);
+function obtenerPedidos(req, res, next) {
 
-const clientesArchivo = path.join(
-    __dirname,
-    "../data/clientes.json"
-);
+    try {
 
-const productosArchivo = path.join(
-    __dirname,
-    "../data/productos.json"
-);
+        let pedidos = leerJSON(ARCHIVO_PEDIDOS);
 
-// ============================================================
-// FUNCIONES AUXILIARES
-// ============================================================
+        const { clienteId, estado } = req.query;
 
-function leerJSON(archivo) {
-    const datos = fs.readFileSync(
-        archivo,
-        "utf-8"
-    );
+        if (clienteId) {
+            pedidos = pedidos.filter(
+                pedido => pedido.clienteId === Number(clienteId)
+            );
+        }
 
-    return JSON.parse(datos);
-}
+        if (estado) {
+            pedidos = pedidos.filter(
+                pedido => pedido.estado === estado
+            );
+        }
 
-function guardarJSON(archivo, datos) {
-    fs.writeFileSync(
-        archivo,
-        JSON.stringify(datos, null, 4)
-    );
+        res.status(200).json(pedidos);
+
+    } catch (error) {
+        next(error);
+    }
 }
 
 // ============================================================
-// ESTADOS PERMITIDOS
+// OBTENER PEDIDO POR ID
 // ============================================================
 
-const ESTADOS_VALIDOS = [
-    "Pendiente",
-    "Preparado",
-    "En camino",
-    "Entregado",
-    "Cancelado"
-];
+function obtenerPedidoPorId(req, res, next) {
 
-// ============================================================
-// GET TODOS / CONSULTAS
-// ============================================================
+    try {
 
-function obtenerPedidos(req, res) {
-    let pedidos = leerJSON(pedidosArchivo);
+        const pedidos = leerJSON(ARCHIVO_PEDIDOS);
 
-    // --------------------------------------------------------
-    // CONSULTA POR CLIENTE
-    // GET /api/pedidos?clienteId=1
-    // --------------------------------------------------------
-
-    if (req.query.clienteId) {
-        const clienteId = Number(req.query.clienteId);
-
-        pedidos = pedidos.filter(
-            pedido => pedido.clienteId === clienteId
-        );
-    }
-
-    // --------------------------------------------------------
-    // CONSULTA POR ESTADO
-    // GET /api/pedidos?estado=Pendiente
-    // --------------------------------------------------------
-
-    if (req.query.estado) {
-        pedidos = pedidos.filter(
-            pedido => pedido.estado === req.query.estado
-        );
-    }
-
-    res.status(200).json(pedidos);
-}
-
-// ============================================================
-// GET POR ID
-// ============================================================
-
-function obtenerPedidoPorId(req, res) {
-    const id = Number(req.params.id);
-    const pedidos = leerJSON(pedidosArchivo);
-
-    const pedido = pedidos.find(
-        pedido => pedido.id === id
-    );
-
-    if (!pedido) {
-        return res.status(404).json({
-            error: "Pedido no encontrado"
-        });
-    }
-
-    res.status(200).json(pedido);
-}
-
-// ============================================================
-// CREAR PEDIDO - POST
-// ============================================================
-
-function crearPedido(req, res) {
-    const { clienteId, productos } = req.body;
-
-    // --------------------------------------------------------
-    // VALIDAR CLIENTE
-    // --------------------------------------------------------
-
-    if (!clienteId) {
-        return res.status(400).json({
-            error: "El pedido debe estar asociado a un cliente"
-        });
-    }
-
-    // --------------------------------------------------------
-    // VALIDAR PRODUCTOS
-    // --------------------------------------------------------
-
-    if (!Array.isArray(productos) || productos.length === 0) {
-        return res.status(400).json({
-            error: "El pedido debe contener al menos un producto"
-        });
-    }
-        // --------------------------------------------------------
-    // LEER CLIENTES, PRODUCTOS Y PEDIDOS
-    // --------------------------------------------------------
-
-    const clientes = leerJSON(clientesArchivo);
-    const productosDisponibles = leerJSON(productosArchivo);
-    const pedidos = leerJSON(pedidosArchivo);
-
-    // --------------------------------------------------------
-    // VERIFICAR QUE EL CLIENTE EXISTA
-    // --------------------------------------------------------
-
-    const clienteExiste = clientes.some(
-        cliente => cliente.id === Number(clienteId)
-    );
-
-    if (!clienteExiste) {
-        return res.status(404).json({
-            error: "El cliente indicado no existe"
-        });
-    }
-        // --------------------------------------------------------
-    // VERIFICAR PRODUCTOS Y CANTIDADES
-    // --------------------------------------------------------
-
-    for (const item of productos) {
-
-        const productoExiste = productosDisponibles.some(
-            producto => producto.id === Number(item.productoId)
+        const pedido = pedidos.find(
+            pedido => pedido.id === Number(req.params.id)
         );
 
-        if (!productoExiste) {
+        if (!pedido) {
             return res.status(404).json({
-                error: `El producto ${item.productoId} no existe`
+                error: "Pedido no encontrado"
             });
         }
 
-        if (
-            typeof item.cantidad !== "number" ||
-            item.cantidad <= 0
-        ) {
-            return res.status(400).json({
-                error: "La cantidad de cada producto debe ser mayor a cero"
-            });
-        }
+        res.status(200).json(pedido);
+
+    } catch (error) {
+        next(error);
     }
-        // --------------------------------------------------------
-    // GENERAR ID DEL NUEVO PEDIDO
-    // --------------------------------------------------------
+}
 
-    const nuevoId =
-        pedidos.length > 0
-            ? Math.max(...pedidos.map(p => p.id)) + 1
+// ============================================================
+// CREAR PEDIDO
+// ============================================================
+
+function crearPedido(req, res, next) {
+
+    try {
+
+        const pedidos = leerJSON(ARCHIVO_PEDIDOS);
+
+        const { clienteId, productos } = req.body;
+
+        const nuevoId = pedidos.length > 0
+            ? Math.max(...pedidos.map(pedido => pedido.id)) + 1
             : 1;
 
-    // --------------------------------------------------------
-    // CREAR NUEVO PEDIDO
-    // --------------------------------------------------------
+        const nuevoPedido = new Pedido(
+            nuevoId,
+            clienteId,
+            productos
+        );
 
-    const nuevoPedido = new Pedido(
-        nuevoId,
-        Number(clienteId),
-        productos,
-        "Pendiente"
-    );
+        pedidos.push(nuevoPedido);
 
-    // --------------------------------------------------------
-    // GUARDAR PEDIDO
-    // --------------------------------------------------------
+        guardarJSON(ARCHIVO_PEDIDOS, pedidos);
 
-    pedidos.push(nuevoPedido);
+        res.status(201).json(nuevoPedido);
 
-    guardarJSON(
-        pedidosArchivo,
-        pedidos
-    );
-
-    // --------------------------------------------------------
-    // RESPUESTA
-    // --------------------------------------------------------
-
-    res.status(201).json(nuevoPedido);
+    } catch (error) {
+        next(error);
+    }
 }
 
 // ============================================================
-// ACTUALIZAR PEDIDO - PUT
+// ACTUALIZAR PEDIDO
 // ============================================================
 
-function actualizarPedido(req, res) {
-    const id = Number(req.params.id);
+function actualizarPedido(req, res, next) {
 
-    const { clienteId, productos } = req.body;
+    try {
 
-    const pedidos = leerJSON(pedidosArchivo);
+        const pedidos = leerJSON(ARCHIVO_PEDIDOS);
 
-    const indice = pedidos.findIndex(
-        pedido => pedido.id === id
-    );
+        const indice = pedidos.findIndex(
+            pedido => pedido.id === Number(req.params.id)
+        );
 
-    if (indice === -1) {
-        return res.status(404).json({
-            error: "Pedido no encontrado"
-        });
+        if (indice === -1) {
+            return res.status(404).json({
+                error: "Pedido no encontrado"
+            });
+        }
+
+        pedidos[indice] = {
+            ...pedidos[indice],
+            ...req.body
+        };
+
+        guardarJSON(ARCHIVO_PEDIDOS, pedidos);
+
+        res.status(200).json(pedidos[indice]);
+
+    } catch (error) {
+        next(error);
     }
-
-    // --------------------------------------------------------
-    // VALIDAR CLIENTE
-    // --------------------------------------------------------
-
-    if (!clienteId) {
-        return res.status(400).json({
-            error: "El pedido debe estar asociado a un cliente"
-        });
-    }
-
-    // --------------------------------------------------------
-    // VALIDAR PRODUCTOS
-    // --------------------------------------------------------
-
-    if (!Array.isArray(productos) || productos.length === 0) {
-        return res.status(400).json({
-            error: "El pedido debe contener al menos un producto"
-        });
-    }
-
-    // --------------------------------------------------------
-    // ACTUALIZAR PEDIDO
-    // --------------------------------------------------------
-
-    pedidos[indice] = {
-        ...pedidos[indice],
-        clienteId: Number(clienteId),
-        productos: productos
-    };
-
-    guardarJSON(
-        pedidosArchivo,
-        pedidos
-    );
-
-    res.status(200).json(pedidos[indice]);
 }
 
 // ============================================================
-// ELIMINAR PEDIDO - DELETE
+// ELIMINAR PEDIDO
 // ============================================================
 
-function eliminarPedido(req, res) {
-    const id = Number(req.params.id);
+function eliminarPedido(req, res, next) {
 
-    const pedidos = leerJSON(pedidosArchivo);
+    try {
 
-    const indice = pedidos.findIndex(
-        pedido => pedido.id === id
-    );
+        const pedidos = leerJSON(ARCHIVO_PEDIDOS);
 
-    if (indice === -1) {
-        return res.status(404).json({
-            error: "Pedido no encontrado"
-        });
+        const indice = pedidos.findIndex(
+            pedido => pedido.id === Number(req.params.id)
+        );
+
+        if (indice === -1) {
+            return res.status(404).json({
+                error: "Pedido no encontrado"
+            });
+        }
+
+        const pedidoEliminado = pedidos.splice(indice, 1)[0];
+
+        guardarJSON(ARCHIVO_PEDIDOS, pedidos);
+
+        res.status(200).json(pedidoEliminado);
+
+    } catch (error) {
+        next(error);
     }
-
-    pedidos.splice(indice, 1);
-
-    guardarJSON(
-        pedidosArchivo,
-        pedidos
-    );
-
-    res.status(200).json({
-        mensaje: "Pedido eliminado correctamente"
-    });
 }
 
 // ============================================================
-// CAMBIAR ESTADO DEL PEDIDO - PATCH
+// CAMBIAR ESTADO
 // ============================================================
 
-function cambiarEstadoPedido(req, res) {
-    const id = Number(req.params.id);
-    const { estado } = req.body;
+function cambiarEstadoPedido(req, res, next) {
 
-    const pedidos = leerJSON(pedidosArchivo);
+    try {
 
-    const pedido = pedidos.find(
-        pedido => pedido.id === id
-    );
+        const pedidos = leerJSON(ARCHIVO_PEDIDOS);
 
-    if (!pedido) {
-        return res.status(404).json({
-            error: "Pedido no encontrado"
-        });
+        const indice = pedidos.findIndex(
+            pedido => pedido.id === Number(req.params.id)
+        );
+
+        if (indice === -1) {
+            return res.status(404).json({
+                error: "Pedido no encontrado"
+            });
+        }
+
+        const pedido = new Pedido(
+            pedidos[indice].id,
+            pedidos[indice].clienteId,
+            pedidos[indice].productos,
+            pedidos[indice].estado,
+            pedidos[indice].fecha
+        );
+
+        pedido.cambiarEstado(req.body.estado);
+
+        pedidos[indice] = pedido;
+
+        guardarJSON(ARCHIVO_PEDIDOS, pedidos);
+
+        res.status(200).json(pedido);
+
+    } catch (error) {
+
+        if (
+            error.message === "Estado no válido" ||
+            error.message.includes("no puede")
+        ) {
+            return res.status(400).json({
+                error: error.message
+            });
+        }
+
+        next(error);
     }
-
-    // --------------------------------------------------------
-    // VALIDAR ESTADO
-    // --------------------------------------------------------
-
-    if (!ESTADOS_VALIDOS.includes(estado)) {
-        return res.status(400).json({
-            error: "Estado no válido"
-        });
-    }
-       // --------------------------------------------------------
-    // REGLAS DE TRANSICIÓN DE ESTADOS
-    // --------------------------------------------------------
-
-    if (
-        pedido.estado === "Entregado" &&
-        estado === "Pendiente"
-    ) {
-        return res.status(400).json({
-            error: "Un pedido entregado no puede volver a Pendiente"
-        });
-    }
-
-    if (
-        pedido.estado === "Cancelado" &&
-        estado === "En camino"
-    ) {
-        return res.status(400).json({
-            error: "Un pedido cancelado no puede pasar a En camino"
-        });
-    }
-        // --------------------------------------------------------
-    // ACTUALIZAR Y GUARDAR ESTADO
-    // --------------------------------------------------------
-
-    pedido.estado = estado;
-
-    guardarJSON(
-        pedidosArchivo,
-        pedidos
-    );
-
-    res.status(200).json(pedido);
-} 
+}
 
 // ============================================================
-// EXPORTAR FUNCIONES
+// EXPORTAR CONTROLADORES
 // ============================================================
 
 module.exports = {

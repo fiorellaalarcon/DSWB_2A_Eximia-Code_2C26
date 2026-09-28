@@ -1,0 +1,24 @@
+[
+    {
+        "id": 1,
+        "clienteId": 1,
+        "productos": [
+            {
+                "productoId": 1,
+                "cantidad": 5
+            }
+        ],
+        "estado": "Pendiente"
+    },
+    {
+        "id": 2,
+        "clienteId": 1,
+        "productos": [
+            {
+                "productoId": 1,
+                "cantidad": 5
+            }
+        ],
+        "estado": "Entregado"
+    }
+]

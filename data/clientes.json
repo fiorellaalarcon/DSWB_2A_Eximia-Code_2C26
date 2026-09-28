@@ -1,0 +1,9 @@
+[
+    {
+        "id": 1,
+        "nombre": "Laura",
+        "apellido": "Rodríguez",
+        "email": "laura@restaurante.com",
+        "empresa": "Sabores Norte"
+    }
+]

@@ -17,7 +17,7 @@
 const express = require("express");
 
 // Importamos las rutas correspondientes a cada módulo.
-//const clientesRoutes = require("./routes/clientes.routes");
+const clientesRoutes = require("./routes/clientes.routes");
 const productosRoutes = require("./routes/productos.routes");
 const pedidosRoutes = require("./routes/pedidos.routes");
 
@@ -83,7 +83,7 @@ app.get("/", (req, res) => {
 
 // Todas las rutas relacionadas con clientes comenzarán con:
 // /api/clientes
-//app.use("/api/clientes", clientesRoutes);
+app.use("/api/clientes", clientesRoutes);
 
 // Todas las rutas relacionadas con productos comenzarán con:
 // /api/productos
