@@ -1,147 +1,247 @@
+// ============================================================
+// CONTROLADOR PRODUCTOS
+// ============================================================
+//
+// Contiene la lógica correspondiente a las solicitudes HTTP
+// del módulo Productos.
+//
+// Responsabilidad:
+// - Recibir la solicitud.
+// - Validar los datos.
+// - Utilizar el modelo Producto.
+// - Leer y escribir la información mediante jsonStorage.
+// - Devolver las respuestas HTTP correspondientes.
+// ============================================================
+
 const Producto = require("../models/Producto");
+const { readJson, writeJson } = require("../utils/jsonStorage");
 
-const manager = new Producto("./data/productos.json");
+const ARCHIVO = "productos.json";
 
-const obtenerProductos = async (req, res) => {
+// ============================================================
+// GET /api/productos
+// GET /api/productos?nombre=...
+// ============================================================
+
+async function obtenerProductos(req, res, next) {
+
     try {
-        const productos = await manager.mostrarProductos();
 
-        const { nombre } = req.query;
+        let productos = await readJson(ARCHIVO);
 
-        // Si viene ?nombre=...
-        if (nombre) {
-            const productosFiltrados = productos.filter(
-                (producto) =>
-                    producto.nombre.toLowerCase().includes(nombre.toLowerCase())
+        // Permite consultar productos por nombre mediante
+        // un parámetro de consulta.
+        if (req.query.nombre) {
+
+            const nombreBuscado = req.query.nombre.toLowerCase();
+
+            productos = productos.filter(producto =>
+                producto.nombre.toLowerCase().includes(nombreBuscado)
             );
-
-            return res.status(200).json(productosFiltrados);
         }
 
-        // Si no viene query param, devuelve todos
         res.status(200).json(productos);
 
     } catch (error) {
-        res.status(500).json({
-            mensaje: "Error al obtener los productos"
-        });
+        next(error);
     }
-};
+}
 
-const obtenerProductoPorId = async (req, res) => {
+// ============================================================
+// GET /api/productos/:id
+// ============================================================
+
+async function obtenerProductoPorId(req, res, next) {
+
     try {
-        const { id } = req.params;
 
-        const producto = await manager.obtenerProductoPorId(id);
+        const id = Number(req.params.id);
+
+        if (!Number.isInteger(id)) {
+            return res.status(400).json({
+                error: "El ID del producto debe ser un número entero."
+            });
+        }
+
+        const productos = await readJson(ARCHIVO);
+
+        const producto = productos.find(
+            producto => producto.id === id
+        );
 
         if (!producto) {
             return res.status(404).json({
-                mensaje: "Producto no encontrado"
+                error: "Producto no encontrado."
             });
         }
 
         res.status(200).json(producto);
 
     } catch (error) {
-        res.status(500).json({
-            mensaje: "Error al obtener el producto"
-        });
+        next(error);
     }
-};
+}
 
-const agregarProducto = async (req, res) => {
-   const agregarProducto = async (req, res) => {
+// ============================================================
+// POST /api/productos
+// ============================================================
+
+async function crearProducto(req, res, next) {
+
     try {
-        const { nombre, precio, categoria, stock, imagen } = req.body;
 
-        // Validar que todos los campos estén completos
-        if (!nombre || !precio || !categoria || !stock || !imagen) {
+        const { nombre, precio } = req.body;
+
+        // Validaciones básicas.
+        if (!nombre || typeof nombre !== "string" || !nombre.trim()) {
             return res.status(400).json({
-                mensaje: "Todos los campos son obligatorios"
+                error: "El nombre del producto es obligatorio."
             });
         }
 
-        // Validar que precio y stock sean números
-        if (isNaN(precio) || isNaN(stock)) {
+        if (
+            typeof precio !== "number" ||
+            Number.isNaN(precio) ||
+            precio <= 0
+        ) {
             return res.status(400).json({
-                mensaje: "El precio y el stock deben ser números"
+                error: "El precio debe ser un número mayor a cero."
             });
         }
 
-        // Crear el producto
-        const producto = {
+        const productos = await readJson(ARCHIVO);
+
+        // Generamos un ID correlativo.
+        const nuevoId = productos.length > 0
+            ? Math.max(...productos.map(producto => producto.id)) + 1
+            : 1;
+
+        const nuevoProducto = new Producto(
+            nuevoId,
             nombre,
-            precio: Number(precio),
-            categoria,
-            stock: Number(stock),
-            imagen
-        };
+            precio
+        );
 
-        // Guardar el producto
-        const productoCreado = await manager.addProductos(producto);
+        productos.push(nuevoProducto);
 
-        // Devolver el recurso creado
-        res.status(201).json(productoCreado);
+        await writeJson(ARCHIVO, productos);
+
+        res.status(201).json(nuevoProducto);
 
     } catch (error) {
-        res.status(500).json({
-            mensaje: "Error al agregar el producto"
-        });
+        next(error);
     }
-};
-};
+}
 
-const actualizarProducto = async (req, res) => {
+// ============================================================
+// PUT /api/productos/:id
+// ============================================================
+
+async function actualizarProducto(req, res, next) {
+
     try {
-        const { id } = req.params;
-        const datos = req.body;
 
-        const producto = await manager.updateProductos(id, datos);
+        const id = Number(req.params.id);
 
-        if (!producto) {
-            return res.status(404).json({
-                mensaje: "Producto no encontrado"
+        if (!Number.isInteger(id)) {
+            return res.status(400).json({
+                error: "El ID del producto debe ser un número entero."
             });
         }
 
-        res.status(200).json({
-            mensaje: "Producto actualizado correctamente",
-            producto
-        });
-    } catch (error) {
-        res.status(500).json({
-            mensaje: "Error al actualizar el producto"
-        });
-    }
-};
+        const { nombre, precio } = req.body;
 
-const eliminarProducto = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const producto = await manager.deleteProductos(id);
-
-        if (!producto) {
-            return res.status(404).json({
-                mensaje: "Producto no encontrado"
+        if (!nombre || typeof nombre !== "string" || !nombre.trim()) {
+            return res.status(400).json({
+                error: "El nombre del producto es obligatorio."
             });
         }
 
-        res.status(200).json({
-            mensaje: "Producto eliminado correctamente",
-            producto
-        });
+        if (
+            typeof precio !== "number" ||
+            Number.isNaN(precio) ||
+            precio <= 0
+        ) {
+            return res.status(400).json({
+                error: "El precio debe ser un número mayor a cero."
+            });
+        }
+
+        const productos = await readJson(ARCHIVO);
+
+        const indice = productos.findIndex(
+            producto => producto.id === id
+        );
+
+        if (indice === -1) {
+            return res.status(404).json({
+                error: "Producto no encontrado."
+            });
+        }
+
+        const productoActualizado = new Producto(
+            id,
+            nombre,
+            precio
+        );
+
+        productos[indice] = productoActualizado;
+
+        await writeJson(ARCHIVO, productos);
+
+        res.status(200).json(productoActualizado);
+
     } catch (error) {
-        res.status(500).json({
-            mensaje: "Error al eliminar el producto"
-        });
+        next(error);
     }
-};
+}
+
+// ============================================================
+// DELETE /api/productos/:id
+// ============================================================
+
+async function eliminarProducto(req, res, next) {
+
+    try {
+
+        const id = Number(req.params.id);
+
+        if (!Number.isInteger(id)) {
+            return res.status(400).json({
+                error: "El ID del producto debe ser un número entero."
+            });
+        }
+
+        const productos = await readJson(ARCHIVO);
+
+        const indice = productos.findIndex(
+            producto => producto.id === id
+        );
+
+        if (indice === -1) {
+            return res.status(404).json({
+                error: "Producto no encontrado."
+            });
+        }
+
+        const eliminado = productos.splice(indice, 1)[0];
+
+        await writeJson(ARCHIVO, productos);
+
+        res.status(200).json({
+            mensaje: "Producto eliminado correctamente.",
+            producto: eliminado
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
 
 module.exports = {
     obtenerProductos,
     obtenerProductoPorId,
-    agregarProducto,
+    crearProducto,
     actualizarProducto,
     eliminarProducto
 };
