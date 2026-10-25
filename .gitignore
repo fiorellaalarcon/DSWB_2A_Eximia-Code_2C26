@@ -10,4 +10,4 @@ npm-debug.log*
 
 # Archivos generados por algunos sistemas operativos.
 .DS_Store
-Thumbs.db
+*.log
