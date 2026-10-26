@@ -1,0 +1,13 @@
+extends layout
+
+block content
+  section.tarjeta
+    p#bienvenida
+    h3 Que puede hacer su rol
+    ul#permisos
+  section.tarjeta
+    h3 Estados de un pedido
+    p Pendiente &rarr; Preparado &rarr; En camino &rarr; Entregado (en cualquier momento previo a Entregado se puede Cancelar).
+
+block scripts
+  script(type="module", src="/js/panel.js")

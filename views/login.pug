@@ -1,0 +1,15 @@
+extends layout
+include mixins
+
+block content
+  section.tarjeta
+    p Ingrese con su usuario. Cada usuario tiene un rol que define que puede hacer.
+    form#formLogin(novalidate)
+      +campo("Usuario", "usuario", "text", { autocomplete: "username" })
+      +campo("Contrasena", "password", "password", { autocomplete: "current-password" })
+      ul#erroresForm.errores(hidden)
+      button(type="submit") Ingresar
+    p.nota Usuarios de prueba: admin / administrativo / deposito / planificador / directivo / repartidor1 (ver README).
+
+block scripts
+  script(type="module", src="/js/login.js")

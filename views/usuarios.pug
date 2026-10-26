@@ -1,0 +1,43 @@
+extends layout
+include mixins
+
+block content
+  section#seccionForm.tarjeta(data-roles="administrador" hidden)
+    h3#tituloForm Nuevo usuario
+    form#formulario(novalidate)
+      +campo("Nombre", "nombre", "text")
+      +campo("Usuario", "usuario", "text")
+      +campo("Contraseña (mín. 8 caracteres, mayúsculas, minúsculas y un carácter especial; al editar, vacía = no cambiarla)", "password", "password", { required: false, autocomplete: "new-password" })
+      .campo
+        label(for="rol") Rol
+        select#rol(name="rol", required)
+          option(value="administrativo") administrativo
+          option(value="deposito") deposito
+          option(value="planificador") planificador
+          option(value="repartidor") repartidor
+          option(value="directivo") directivo
+          option(value="administrador") administrador
+      .campo
+        label(for="repartidor") Repartidor vinculado (solo si el rol es repartidor)
+        select#repartidor(name="repartidor")
+          option(value="") (ninguno)
+      ul#erroresForm.errores(hidden)
+      button#btnGuardar(type="submit") Guardar
+      button#btnCancelar(type="button", hidden) Cancelar edicion
+  section.tarjeta
+    h3 Listado
+    +filtroInactivos
+    table
+      thead
+        tr
+          th Nombre
+          th Usuario
+          th Rol
+          th Repartidor vinculado
+          th Estado
+          th Ultima modificacion
+          th Acciones
+      tbody#tabla
+
+block scripts
+  script(type="module", src="/js/usuarios.js")
