@@ -1,0 +1,30 @@
+extends layout
+include mixins
+
+block content
+  section#seccionForm.tarjeta(data-roles="planificador" hidden)
+    h3#tituloForm Nuevo repartidor
+    form#formulario(novalidate)
+      +campo("Nombre", "nombre", "text")
+      +campo("Telefono", "telefono", "text")
+      +campo("Patente", "patente", "text", { required: false })
+      ul#erroresForm.errores(hidden)
+      button#btnGuardar(type="submit") Guardar
+      button#btnCancelar(type="button", hidden) Cancelar edicion
+  section.tarjeta
+    h3 Listado
+    +filtroInactivos
+    table
+      thead
+        tr
+          th Nombre
+          th Telefono
+          th Patente
+          th Disponible
+          th Estado
+          th Ultima modificacion
+          th Acciones
+      tbody#tabla
+
+block scripts
+  script(type="module", src="/js/repartidores.js")
