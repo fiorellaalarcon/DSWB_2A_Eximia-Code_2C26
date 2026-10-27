@@ -1,0 +1,30 @@
+extends layout
+
+block content
+  section.tarjeta
+    p Registro de acciones importantes: quien, que y cuando. Solo lectura.
+    .campo
+      label(for="filtroEntidad") Entidad
+      select#filtroEntidad
+        option(value="") Todas
+        each e in ["Usuario","Cliente","Producto","Repartidor","Pedido"]
+          option(value=e)= e
+    .campo
+      label(for="filtroAccion") Accion
+      select#filtroAccion
+        option(value="") Todas
+        each a in ["LOGIN","LOGIN_FALLIDO","CREAR","MODIFICAR","BAJA","REACTIVAR","CAMBIO_ESTADO"]
+          option(value=a)= a
+    table
+      thead
+        tr
+          th Fecha
+          th Usuario
+          th Rol
+          th Accion
+          th Entidad
+          th Detalle
+      tbody#tabla
+
+block scripts
+  script(type="module", src="/js/auditoria.js")

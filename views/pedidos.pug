@@ -1,0 +1,47 @@
+extends layout
+include mixins
+
+block content
+  section#seccionForm.tarjeta(data-roles="administrativo" hidden)
+    h3#tituloForm Nuevo pedido
+    form#formulario(novalidate)
+      .campo
+        label(for="cliente") Cliente
+        select#cliente(name="cliente", required)
+      h4 Productos
+      #items
+      button#btnAgregarItem(type="button") + Agregar producto
+      ul#erroresForm.errores(hidden)
+      button#btnGuardar(type="submit") Guardar pedido
+      button#btnCancelar(type="button", hidden) Cancelar edicion
+  section.tarjeta
+    h3 Pedidos
+    .filtros
+      .campo
+        label(for="filtroEstado") Filtrar por estado
+        select#filtroEstado
+          option(value="") Todos
+          each e in ["Pendiente","Preparado","En camino","Entregado","Cancelado"]
+            option(value=e)= e
+      //- El repartidor no consulta clientes (solo ve sus pedidos asignados).
+      .campo(data-roles="administrador,administrativo,deposito,planificador,directivo" hidden)
+        label(for="filtroCliente") Filtrar por cliente
+        select#filtroCliente
+          option(value="") Todos
+      .campo(data-roles="planificador" hidden)
+        label(for="repartidorDespacho") Repartidor para despachar (En camino)
+        select#repartidorDespacho
+    table
+      thead
+        tr
+          th Cliente
+          th Productos
+          th Total
+          th Estado
+          th Repartidor
+          th Ultima modificacion
+          th Acciones
+      tbody#tabla
+
+block scripts
+  script(type="module", src="/js/pedidos.js")
