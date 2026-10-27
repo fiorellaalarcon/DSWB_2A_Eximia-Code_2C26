@@ -1,36 +1,25 @@
 // ============================================================
 // MODELO PRODUCTO
 // ============================================================
-//
-// Representa un producto que puede formar parte de un pedido.
-//
-// En esta primera entrega el modelo se concentra en los datos
-// propios del producto y sus validaciones básicas.
-//
-// La persistencia se realiza mediante utils/jsonStorage.js.
+// CAMBIO vs 1ra entrega: Schema de Mongoose. Se agregan unidad,
+// stock (opcional), activo (baja logica) y trazabilidad.
 // ============================================================
+import mongoose from "mongoose";
 
-class Producto {
-    constructor(id, nombre, precio) {
+const productoSchema = new mongoose.Schema(
+  {
+    nombre: { type: String, required: [true, "El nombre del producto es obligatorio."], trim: true },
+    descripcion: { type: String, trim: true, default: "" },
+    precio: {
+      type: Number,
+      required: [true, "El precio es obligatorio."],
+      min: [0.01, "El precio debe ser mayor a cero."],
+    },
+    activo: { type: Boolean, default: true },
+    creadoPor: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" },
+    modificadoPor: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario" },
+  },
+  { timestamps: true }
+);
 
-        // El nombre es obligatorio.
-        if (!nombre || typeof nombre !== "string" || !nombre.trim()) {
-            throw new Error("El nombre del producto es obligatorio.");
-        }
-
-        // El precio debe ser numérico y mayor a cero.
-        if (
-            typeof precio !== "number" ||
-            Number.isNaN(precio) ||
-            precio <= 0
-        ) {
-            throw new Error("El precio debe ser un número mayor a cero.");
-        }
-
-        this.id = id;
-        this.nombre = nombre.trim();
-        this.precio = precio;
-    }
-}
-
-module.exports = Producto;
+export const Producto = mongoose.model("Producto", productoSchema);

@@ -1,0 +1,32 @@
+extends layout
+include mixins
+
+block content
+  section#seccionForm.tarjeta(data-roles="administrativo" hidden)
+    h3#tituloForm Nuevo producto
+    form#formulario(novalidate)
+      +campo("Nombre", "nombre", "text")
+      +campo("Descripcion", "descripcion", "text", { required: false })
+      +campo("Precio", "precio", "number", { step: "0.01", min: "0.01" })
+      ul#erroresForm.errores(hidden)
+      button#btnGuardar(type="submit") Guardar
+      button#btnCancelar(type="button", hidden) Cancelar edicion
+  section.tarjeta
+    h3 Listado
+    .campo
+      label(for="filtroNombre") Buscar por nombre
+      input#filtroNombre(type="search", placeholder="ej: tomate")
+    +filtroInactivos
+    table
+      thead
+        tr
+          th Nombre
+          th Descripcion
+          th Precio
+          th Estado
+          th Ultima modificacion
+          th Acciones
+      tbody#tabla
+
+block scripts
+  script(type="module", src="/js/productos.js")

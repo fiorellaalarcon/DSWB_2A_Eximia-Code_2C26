@@ -1,0 +1,12 @@
+//- Mixin reutilizable: un campo de formulario con su etiqueta.
+//- Uso:  +campo("Nombre", "nombre", "text")
+mixin campo(etiqueta, nombre, tipo, atributos)
+  .campo
+    label(for=nombre)= etiqueta
+    input(id=nombre, name=nombre, type=tipo || "text", required=true)&attributes(atributos || {})
+
+//- Cabecera de listado con checkbox "ver inactivos" (solo lo ven directivo/administrador).
+mixin filtroInactivos
+  label.solo-historial(data-roles="directivo,administrador" hidden)
+    input#chkInactivos(type="checkbox")
+    |  Ver tambien registros inactivos (historial)
