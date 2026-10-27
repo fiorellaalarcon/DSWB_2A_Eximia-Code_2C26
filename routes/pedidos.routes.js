@@ -1,55 +1,22 @@
-// ============================================================
-// RUTAS DE PEDIDOS
-// ============================================================
+// /api/pedidos
+//  - Leer: todos los roles (el repartidor solo ve SUS pedidos asignados).
+//  - Crear / editar (solo Pendiente): administrativo.
+//  - Cambiar estado: deposito, planificador, administrativo o repartidor; el controlador
+//    verifica ademas QUE paso puede hacer cada uno (tabla TRANSICIONES).
+import { Router } from "express";
+import * as controller from "../controllers/pedidos.controller.js";
+import { permitirRoles } from "../middlewares/roles.middleware.js";
+import { validarId, validarPedido, validarCambioEstado } from "../middlewares/validaciones.middleware.js";
+import { ROLES } from "../models/Usuario.js";
 
-const express = require("express");
+const router = Router();
+const { ADMINISTRATIVO, DEPOSITO, PLANIFICADOR, REPARTIDOR } = ROLES;
 
-const {
-    obtenerPedidos,
-    obtenerPedidoPorId,
-    crearPedido,
-    actualizarPedido,
-    eliminarPedido,
-    cambiarEstadoPedido
-} = require("../controllers/pedidos.controller");
+router.get("/", controller.listar); // ?cliente=<id>&estado=Pendiente
+router.get("/:id", validarId, controller.obtener);
+router.post("/", permitirRoles(ADMINISTRATIVO), validarPedido, controller.crear);
+router.put("/:id", permitirRoles(ADMINISTRATIVO), validarId, validarPedido, controller.actualizar);
+router.patch("/:id/estado", permitirRoles(DEPOSITO, PLANIFICADOR, ADMINISTRATIVO, REPARTIDOR), validarId, validarCambioEstado, controller.cambiarEstado);
+// No hay DELETE: un pedido no se borra, se cancela (PATCH estado = Cancelado).
 
-const router = express.Router();
-
-// ============================================================
-// RUTAS GET
-// ============================================================
-
-// Obtener todos los pedidos
-// También permite consultar por clienteId o estado
-router.get("/", obtenerPedidos);
-
-// Obtener un pedido por ID
-router.get("/:id", obtenerPedidoPorId);
-
-// ============================================================
-// RUTAS POST, PUT Y DELETE
-// ============================================================
-
-// Crear un pedido
-router.post("/", crearPedido);
-
-// Actualizar un pedido
-router.put("/:id", actualizarPedido);
-
-// Eliminar un pedido
-router.delete("/:id", eliminarPedido);
-
-// ============================================================
-// RUTA PATCH - CAMBIAR ESTADO
-// ============================================================
-
-// Cambiar el estado de un pedido
-// IMPORTANTE: esta ruta debe estar antes de /:id
-router.patch("/:id/estado", cambiarEstadoPedido);
-
-// ============================================================
-// EXPORTAR ROUTER
-// ============================================================
-
-module.exports = router;
-
+export default router;
