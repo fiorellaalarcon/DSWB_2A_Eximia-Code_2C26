@@ -3,8 +3,5 @@ import { validarProducto } from "../middlewares/validaciones.middleware.js";
 import { crearRouterCrud } from "./crud.routes.js";
 import { ROLES } from "../models/Usuario.js";
 
-export default crearRouterCrud(
-  productosController,
-  validarProducto,
-  ROLES.ADMINISTRATIVO
-);
+// /api/productos  (GET ?nombre=tomate, ...)
+export default crearRouterCrud(productosController, validarProducto, ROLES.ADMINISTRATIVO); // la oficina administra el catalogo
