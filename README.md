@@ -2,15 +2,15 @@
 
 # Desarrollo de Sistemas Web (Back End) — 2° A — 2C2026 · Caso 2: Distribución de Pedidos “FreshRoute”
 
-Links:
-Carpeta Drive: https://drive.google.com/drive/folders/1DIdFfikiBLpY_M7adQ7gS02nxS6y_cJL?usp=sharing 
+•	Carpeta Drive: 
+https://drive.google.com/drive/folders/1DIdFfikiBLpY_M7adQ7gS02nxS6y_cJL?usp=sharing
 
-Github: https://github.com/fiorellaalarcon/DSWB_2A_Eximia-Code_2C26
+•	GitHub: 
+https://github.com/fiorellaalarcon/DSWB_2A_Eximia-Code_2C26
 
-Link al Video: 
+•	Link al Video de las entregas:
 1° parcial: https://drive.google.com/file/d/13FJ2l6Ig-kQTDpDHzRFaP_HdFP51kCij/view?usp=sharing
-
-2° parcial: 
+2° parcial: https://drive.google.com/file/d/1IhBv8rT4i2CVdOwhDH4SutLOmAwW8mAm/view?usp=sharing
 
 ### Integrantes
 - Alarcón, Fiorella Melina
@@ -18,8 +18,37 @@ Link al Video:
 - Churquina, Javier
 - Jasque Cano, Malena Concepción
 
-
 Backend + interfaz Pug para registrar clientes, productos, repartidores y pedidos, controlando el estado de cada entrega.
+
+## Caso 2: 
+FreshRoute realiza entregas de alimentos a restaurantes. El sistema necesita registrar los pedidos y controlar su estado durante la distribución.
+## Problemática
+Los pedidos se registran manualmente y los empleados no tienen una forma centralizada de consultar si una entrega fue preparada, despachada o entregada.
+
+## Alcance del sistema
+El backend administrará:
+Clientes.
+Pedidos.
+Productos.
+Repartidores.
+
+El alcance de esta segunda entrega está detallado en `doc/alcance.md`
+
+## Estados de entrega.
+Estados posibles
+Un pedido podrá encontrarse en:
+Pendiente.
+Preparado.
+En camino.
+Entregado.
+Cancelado.
+
+## Reglas de negocio
+Un pedido debe estar asociado a un cliente.
+Un pedido debe contener al menos un producto.
+Un pedido entregado no puede volver a estado pendiente.
+Un pedido cancelado no puede ser enviado.
+Solo un repartidor disponible puede recibir un pedido para entregar.
 
 ## Qué cambió respecto de la primera entrega
 | Tema | 1ª entrega | 2ª entrega |
@@ -138,3 +167,24 @@ Códigos: 200/201 ok · 400 datos inválidos · 401 sin identificar · 403 sin p
 
 ## Flujo de trabajo en GitHub
 Ver `CONTRIBUTING.md`.
+
+## Declaración de uso de IA
+### Herramienta utilizada
+Se utilizó Claude Sonnet 5.5 (Anthropic) como herramienta de asistencia durante el desarrollo de la segunda entrega de FreshRoute. Su uso estuvo orientado a resolver dudas técnicas, analizar el código de la primera entrega, evaluar alternativas de implementación y obtener propuestas iniciales de código y documentación.
+La asistencia se aplicó principalmente a la migración a ES Modules y Mongoose, las validaciones, los permisos por rol, la auditoría, la interfaz Pug con Fetch y las pruebas automáticas.
+
+### Aplicación y revisión por parte del equipo
+Las propuestas generadas por la IA fueron revisadas y adaptadas por el grupo de acuerdo con los requisitos del caso FreshRoute. El equipo trabajó sobre las reglas de negocio, los permisos de cada rol, las transiciones de estado de los pedidos, las validaciones y la integración de los distintos módulos.
+Para comprobar el funcionamiento del sistema, se ejecutó la aplicación y se realizaron pruebas automáticas mediante `npm test`. También se revisaron los permisos, los flujos de los pedidos y las validaciones, realizando los ajustes necesarios durante el desarrollo.
+La documentación inicial también fue revisada, mejorada y completada por el equipo, incluyendo capturas y explicaciones del proyecto. Cada integrante explica en el video el código de su parte, y la integración y el funcionamiento general fueron revisados por el grupo.
+Las limitaciones están documentadas expresamente y no se presentan como prácticas seguras.
+
+### Referencias y recursos externos
+- **Claude (Anthropic):** https://claude.ai/
+- **Repositorio del proyecto:** https://github.com/fiorellaalarcon/DSWB_2A_Eximia-Code_2C26
+- **Documentación oficial de MongoDB:** https://www.mongodb.com/docs/
+- **Documentación oficial de Mongoose:** https://mongoosejs.com/docs/
+- **Documentación oficial de Express:** https://expressjs.com/
+- **Documentación oficial de Pug:** https://pugjs.org/
+
+La IA se utilizó como herramienta de apoyo durante el desarrollo, sin sustituir la revisión técnica, las decisiones de implementación ni la responsabilidad del equipo sobre el resultado final.
