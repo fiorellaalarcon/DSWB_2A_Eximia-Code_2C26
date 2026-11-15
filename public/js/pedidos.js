@@ -179,3 +179,14 @@ async function cambiarEstado(pedido, estado) {
 await cargarCatalogos();
 if (puedeCrear) agregarFila();
 await cargar();
+
+// ---------- tiempo real (Socket.IO, Bloque 11) ----------
+// Cuando OTRA persona crea o cambia un pedido, el servidor avisa y se recarga la lista sola.
+// El aviso trae solo id y estado; los datos se vuelven a pedir a la API, que aplica los permisos.
+if (window.io) {
+  const socket = io();
+  socket.on("pedido:actualizado", () => {
+    cargar();
+    if (esPlanificador) cargarRepartidores();
+  });
+}

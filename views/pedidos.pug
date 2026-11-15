@@ -16,6 +16,7 @@ block content
       button#btnCancelar(type="button", hidden) Cancelar edicion
   section.tarjeta
     h3 Pedidos
+    p.nota Esta lista se actualiza sola cuando otra persona cambia un pedido (tiempo real).
     .filtros
       .campo
         label(for="filtroEstado") Filtrar por estado
@@ -44,4 +45,5 @@ block content
       tbody#tabla
 
 block scripts
+  script(src="/socket.io/socket.io.js")
   script(type="module", src="/js/pedidos.js")
