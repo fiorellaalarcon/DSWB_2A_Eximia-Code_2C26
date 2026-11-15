@@ -4,14 +4,26 @@ html(lang="es")
     meta(charset="UTF-8")
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
     title #{titulo} - FreshRoute
+    link(rel="icon", href="/img/logo-freshroute.webp", type="image/webp")
     link(rel="stylesheet", href="/css/styles.css")
-  body
+  //- Los datos del usuario los pone el SERVIDOR (ya no se guardan en el navegador). auth.js los lee de aqui.
+  body(data-usuario-id=usuario && usuario._id, data-nombre=usuario && usuario.nombre, data-rol=usuario && usuario.rol)
     header.site-header
-      .container
-        h1 FreshRoute
-        p Distribucion de pedidos - Eximia Code
-        //- El menu lo construye public/js/auth.js segun el rol del usuario.
-        nav#menu
+      .container.header-flex
+        a.marca(href=usuario ? "/panel" : "/login")
+          //- Logo de FreshRoute: esquina superior izquierda, 96 x 96 px.
+          img.logo(src="/img/logo-freshroute.webp", width="96", height="96", alt="Logo de FreshRoute")
+          span.marca-texto
+            strong FreshRoute
+            small Distribución de pedidos · Eximia Code
+        if usuario
+          button#btnMenu.btn-menu(type="button", aria-expanded="false", aria-controls="menu") ☰ Menú
+          //- El menu llega ya filtrado por rol desde el servidor (config/menu.js).
+          nav#menu
+            each item in menu
+              a(href=item.href, class=(rutaActual === item.href ? "activo" : ""), aria-current=(rutaActual === item.href ? "page" : false))= item.texto
+            span.usuario-info #{usuario.nombre} (#{usuario.rol})
+            button#btnSalir(type="button") Salir
     main.container
       h2= titulo
       //- Area de mensajes de exito / error (la actualiza ui.js, sin recargar).
@@ -19,5 +31,6 @@ html(lang="es")
       block content
     footer.site-footer
       .container
-        p Segundo parcial - Desarrollo de Sistemas Web (Back End) 2A - Eximia Code
+        p Entrega final · Desarrollo de Sistemas Web (Back End) · 2A · Eximia Code
+    script(type="module", src="/js/layout.js")
     block scripts
