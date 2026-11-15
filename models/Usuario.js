@@ -1,19 +1,20 @@
 // ============================================================
-// MODELO USUARIO  (NUEVO en la 2da entrega)
+// MODELO USUARIO
 // ============================================================
-// Representa a quien inicia sesion en el sistema y su ROL.
-// El rol define que puede hacer (ver middlewares/roles.middleware.js).
+// Representa a quien inicia sesion en el sistema y su ROL
+// (ver middlewares/roles.middleware.js).
 //
-// !!! LIMITACION DOCUMENTADA !!!
-// La contrasena se guarda y compara en TEXTO PLANO porque en esta
-// instancia todavia no se vio hash/encriptacion. NO es una practica
-// segura para produccion. La estructura ya esta preparada: el unico
-// lugar donde se compara es el metodo verificarPassword(), y el unico
-// lugar donde se guardaria es este esquema; al incorporar bcrypt
-// (3ra entrega) solo se modifican esos dos puntos.
+// CAMBIO en la 3ra entrega (seguridad):
+//  - La contrasena YA NO se guarda en texto plano. Se guarda un HASH
+//    (PBKDF2) y una SAL unica por usuario (services/auth.service.js).
+//  - La politica de contrasena (8+, mayuscula, minuscula, especial) se
+//    sigue validando en las 3 capas: ahora la 3ra capa corre ANTES de
+//    hashear, dentro del hook pre("validate") de este modelo.
+//  - El resto del codigo no cambio: sigue escribiendo "usuario.password = x".
 // ============================================================
 import mongoose from "mongoose";
-import { errorPassword, MENSAJE_PASSWORD } from "../public/js/reglas.js"; // reglas compartidas (front, back y BD)
+import { errorPassword } from "../public/js/reglas.js"; // reglas compartidas (front, back y BD)
+import { crearPasswordSeguro, verificarPassword } from "../services/auth.service.js";
 
 // ROLES = perfiles que describe el caso FreshRoute (administrativos, operadores de
 // deposito, planificadores de rutas, choferes/repartidores y direccion). Cada rol existe porque en el
@@ -37,31 +38,54 @@ const usuarioSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
-    // select:false -> la contrasena NUNCA viaja en las consultas por defecto.
-    // CAPA 3 (base de datos): ademas de required, el esquema exige la politica de contrasena.
-    // select:false -> la contrasena NUNCA viaja en las consultas por defecto.
-    password: {
-      type: String,
-      required: [true, "La contrasena es obligatoria."],
-      validate: { validator: (v) => errorPassword(v) === null, message: MENSAJE_PASSWORD },
-      select: false,
-    },
+    // Lo que se guarda: hash + sal. select:false -> nunca viajan en las consultas por defecto.
+    passwordHash: { type: String, required: [true, "La contrasena es obligatoria."], select: false },
+    salt: { type: String, required: true, select: false },
     rol: {
       type: String,
       enum: { values: Object.values(ROLES), message: "Rol no permitido." },
       required: [true, "El rol es obligatorio."],
     },
-    // Solo para el rol "repartidor": a cual registro de la coleccion Repartidores corresponde.
-    // Asi el sistema sabe cuales son SUS pedidos y puede impedir que cierre los de otro.
+    // Solo para el rol "repartidor": a cual registro de la flota corresponde.
     repartidor: { type: mongoose.Schema.Types.ObjectId, ref: "Repartidor" },
     activo: { type: Boolean, default: true }, // baja logica
   },
-  { timestamps: true } // createdAt / updatedAt automaticos
+  {
+    timestamps: true, // createdAt / updatedAt automaticos
+    toJSON: {
+      // Defensa extra: aunque se devuelva el documento recien creado, nunca sale el hash ni la sal.
+      transform: (doc, ret) => {
+        delete ret.passwordHash;
+        delete ret.salt;
+        delete ret.__v;
+        return ret;
+      },
+    },
+  }
 );
 
-// Punto unico de comparacion (hoy texto plano; en la próxima entrega bcrypt.compare).
+// Campo VIRTUAL "password": existe solo en memoria (no se guarda). Al asignarlo
+// queda esperando al hook de abajo, que lo valida y lo convierte en hash + sal.
+usuarioSchema.virtual("password").set(function (passwordPlano) {
+  this._passwordPlano = passwordPlano;
+});
+
+usuarioSchema.pre("validate", async function () {
+  if (this._passwordPlano === undefined) return; // no se cambio la contrasena
+  const error = errorPassword(this._passwordPlano); // CAPA 3: politica de contrasena
+  if (error) {
+    this.invalidate("password", error);
+    return;
+  }
+  const { salt, passwordHash } = await crearPasswordSeguro(this._passwordPlano);
+  this.salt = salt;
+  this.passwordHash = passwordHash;
+  this._passwordPlano = undefined; // la clave en texto plano no se conserva en memoria
+});
+
+// Punto unico de comparacion (requiere haber consultado con .select("+passwordHash +salt")).
 usuarioSchema.methods.verificarPassword = function (passwordIngresada) {
-  return this.password === passwordIngresada;
+  return verificarPassword(passwordIngresada, this.salt, this.passwordHash);
 };
 
 export const Usuario = mongoose.model("Usuario", usuarioSchema);
