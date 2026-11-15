@@ -23,7 +23,7 @@ export const iaConfigurada = () => Boolean(process.env.GEMINI_API_KEY);
 async function obtenerModelo() {
   if (!iaConfigurada()) throw new AppError("El asistente de IA no esta configurado (falta GEMINI_API_KEY).", 503);
   modelo ??= new GoogleGenerativeAI(process.env.GEMINI_API_KEY).getGenerativeModel({
-    model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    model: process.env.GEMINI_MODEL || "gemini-4-hydrogen",
   });
   instrucciones ??= await fs.readFile(new URL("../prompts/asistente-freshroute.txt", import.meta.url), "utf-8");
   return modelo;
