@@ -8,24 +8,29 @@
 // Ejecutar:  npm test     (requiere MongoDB encendido)
 // ============================================================
 process.env.NODE_ENV = "test"; // silencia el logger
+process.env.JWT_SECRET = "clave-de-pruebas-de-al-menos-32-caracteres-123456"; // nunca la real
+delete process.env.GEMINI_API_KEY; // los tests no llaman a la IA real
 import "dotenv/config";
+delete process.env.GEMINI_API_KEY; // por si el .env la define
 import { before, after, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import mongoose from "mongoose";
-import app from "../app.js";
-import { Usuario } from "../models/Usuario.js";
-import { Repartidor } from "../models/Repartidor.js";
-import { Cliente } from "../models/Cliente.js";
+import { io as clienteSocket } from "socket.io-client";
+import app from "../../app.js";
+import { crearServidor } from "../../config/servidor.js";
+import { Usuario } from "../../models/Usuario.js";
+import { Repartidor } from "../../models/Repartidor.js";
+import { Cliente } from "../../models/Cliente.js";
 
-let servidor, base;
-const ids = {}; // ids de usuarios de prueba (uno por rol)
+let servidor, base, io;
+const cookies = {}; // cookie de sesion (JWT) de cada usuario de prueba, obtenida por el login real
 const repIds = {}; // ids de los repartidores vinculados a las cuentas "repartidor" y "repartidor2"
 
 // Helper: hace fetch a la app de test con el usuario indicado.
 const api = async (metodo, ruta, { usuario, body } = {}) => {
   const res = await fetch(base + ruta, {
     method: metodo,
-    headers: { "Content-Type": "application/json", ...(usuario && { "x-usuario-id": ids[usuario] }) },
+    headers: { "Content-Type": "application/json", ...(usuario && { Cookie: cookies[usuario] }) },
     body: body ? JSON.stringify(body) : undefined,
   });
   return { status: res.status, data: await res.json() };
@@ -50,12 +55,23 @@ before(async () => {
     { nombre: "Chofer Uno", usuario: "repartidor", password: "Clave.1234", rol: "repartidor", repartidor: r1._id },
     { nombre: "Chofer Dos", usuario: "repartidor2", password: "Clave.1234", rol: "repartidor", repartidor: r2._id },
   ]);
-  us.forEach((u) => (ids[u.usuario] = String(u._id)));
-  servidor = app.listen(0); // puerto libre al azar
+  const creado = crearServidor(app); // HTTP + Socket.IO, igual que en index.js
+  servidor = creado.server;
+  io = creado.io;
+  await new Promise((ok) => servidor.listen(0, ok)); // puerto libre al azar
   base = `http://127.0.0.1:${servidor.address().port}`;
+  // Cada usuario inicia sesion de verdad: el servidor responde con la cookie httpOnly del JWT.
+  for (const u of us) {
+    const res = await fetch(`${base}/api/auth/login`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usuario: u.usuario, password: "Clave.1234" }),
+    });
+    cookies[u.usuario] = res.headers.getSetCookie()[0].split(";")[0]; // "token=eyJ..."
+  }
 });
 
 after(async () => {
+  io.close();
   servidor.close();
   await mongoose.connection.dropDatabase();
   await mongoose.disconnect();
@@ -74,6 +90,97 @@ describe("Auth", () => {
   });
   it("T3 API sin identificar -> 401", async () => {
     assert.equal((await api("GET", "/api/clientes")).status, 401);
+  });
+});
+
+describe("Seguridad: hash, JWT y cookie (3ra entrega)", () => {
+  it("S1 la cookie del login es httpOnly y el token NO viaja en el cuerpo", async () => {
+    const res = await fetch(`${base}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ usuario: "deposito", password: "Clave.1234" }) });
+    assert.match(res.headers.getSetCookie()[0], /HttpOnly/i);
+    assert.equal(JSON.stringify(await res.json()).includes("eyJ"), false);
+  });
+  it("S2 la contrasena se guarda HASHEADA con sal unica (no en texto plano)", async () => {
+    const [a, b] = await Usuario.find({ usuario: { $in: ["deposito", "planificador"] } }).select("+passwordHash +salt");
+    assert.notEqual(a.passwordHash, "Clave.1234");
+    assert.equal(a.passwordHash.length, 128); // 64 bytes en hexadecimal
+    assert.notEqual(a.passwordHash, b.passwordHash); // misma clave, distinto hash (sal distinta)
+    assert.notEqual(a.salt, b.salt);
+  });
+  it("S3 un token adulterado o el viejo encabezado x-usuario-id ya no sirven -> 401", async () => {
+    const adulterado = await fetch(`${base}/api/clientes`, { headers: { Cookie: `${cookies.deposito}x` } });
+    assert.equal(adulterado.status, 401);
+    const viejo = await fetch(`${base}/api/clientes`, { headers: { "x-usuario-id": "507f1f77bcf86cd799439011" } });
+    assert.equal(viejo.status, 401);
+  });
+  it("S4 las paginas estan protegidas en el servidor: sin sesion -> /login; rol no permitido -> /panel", async () => {
+    const ir = (ruta, c) => fetch(base + ruta, { redirect: "manual", headers: c ? { Cookie: c } : {} });
+    const sinSesion = await ir("/clientes");
+    assert.equal(sinSesion.status, 302);
+    assert.equal(sinSesion.headers.get("location"), "/login");
+    assert.equal((await ir("/clientes", cookies.repartidor)).headers.get("location"), "/panel");
+    assert.equal((await ir("/clientes", cookies.administrativo)).status, 200);
+    assert.equal((await ir("/login")).status, 200);
+  });
+  it("S5 un usuario dado de baja pierde el acceso aunque su token siga vigente -> 401", async () => {
+    const u = await Usuario.create({ nombre: "Temp", usuario: "temporal", password: "Clave.1234", rol: "directivo" });
+    const login = await fetch(`${base}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ usuario: "temporal", password: "Clave.1234" }) });
+    const cookie = login.headers.getSetCookie()[0].split(";")[0];
+    assert.equal((await fetch(`${base}/api/pedidos`, { headers: { Cookie: cookie } })).status, 200);
+    assert.equal((await api("DELETE", `/api/usuarios/${u._id}`, { usuario: "administrador" })).status, 200);
+    assert.equal((await fetch(`${base}/api/pedidos`, { headers: { Cookie: cookie } })).status, 401);
+  });
+  it("S6 el logout borra la cookie", async () => {
+    const res = await fetch(`${base}/api/auth/logout`, { method: "POST", headers: { Cookie: cookies.directivo } });
+    assert.equal(res.status, 200);
+    assert.match(res.headers.getSetCookie()[0], /token=;/);
+  });
+});
+
+describe("WebSockets: chat con IA (Bloques 11.0 a 11.2)", () => {
+  const conectar = (usuario) => clienteSocket(base, { extraHeaders: usuario ? { Cookie: cookies[usuario] } : {}, reconnection: false, transports: ["websocket"] });
+  const esperar = (socket, evento) => new Promise((ok) => socket.once(evento, ok));
+
+  it("W1 sin sesion no se puede conectar al chat", async () => {
+    const socket = conectar(null);
+    const error = await esperar(socket, "connect_error");
+    assert.match(error.message, /No autorizado/);
+    socket.close();
+  });
+  it("W2 el nombre lo pone el SERVIDOR: nadie puede hablar en nombre de otro", async () => {
+    const a = conectar("deposito"), b = conectar("planificador");
+    await Promise.all([esperar(a, "connect"), esperar(b, "connect")]);
+    const recibido = esperar(b, "mensaje");
+    a.emit("mensaje", { texto: "Hola equipo", usuario: "Director General" }); // intento de suplantar
+    const m = await recibido;
+    assert.equal(m.usuario, "deposito"); // sale del JWT, no de lo que mande el cliente
+    assert.equal(m.texto, "Hola equipo");
+    a.close(); b.close();
+  });
+  it("W3 @gemini sin API key responde con un aviso claro (la app no se rompe)", async () => {
+    const s = conectar("directivo");
+    await esperar(s, "connect");
+    const respuesta = new Promise((ok) => s.on("mensaje", (m) => m.rol === "ia" && ok(m)));
+    s.emit("mensaje", { texto: "@gemini cuantos pedidos hay?" });
+    assert.match((await respuesta).texto, /no esta configurado/);
+    s.close();
+  });
+  it("W4 mensajes vacios o demasiado largos se rechazan con un aviso", async () => {
+    const s = conectar("deposito");
+    await esperar(s, "connect");
+    const aviso = esperar(s, "aviso");
+    s.emit("mensaje", { texto: "x".repeat(501) });
+    assert.match(await aviso, /entre 1 y 500/);
+    s.close();
+  });
+  it("W5 al cambiar un pedido se avisa en tiempo real (pedido:actualizado)", async () => {
+    const cli = (await api("POST", "/api/clientes", { usuario: "administrativo", body: { nombre: "RT SA", email: "rt@x.com", direccion: "d", telefono: "1" } })).data;
+    const prod = (await api("POST", "/api/productos", { usuario: "administrativo", body: { nombre: "RT", precio: 10 } })).data;
+    const s = conectar("directivo");
+    await esperar(s, "connect");
+    const evento = esperar(s, "pedido:actualizado");
+    const nuevo = await api("POST", "/api/pedidos", { usuario: "administrativo", body: { cliente: cli._id, items: [{ producto: prod._id, cantidad: 1 }] } });
+    assert.deepEqual(await evento, { id: nuevo.data._id, estado: "Pendiente" });
+    s.close();
   });
 });
 

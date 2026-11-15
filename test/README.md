@@ -1,42 +1,26 @@
-# Pruebas — FreshRoute (2ª entrega)
+# Pruebas — FreshRoute (entrega final)
 
-Ejecutar: `npm test` (necesita MongoDB encendido; usa la base `freshroute_test`, que se borra al terminar).
-Herramienta: `node:test` (incluida en Node, sin dependencias). Las pruebas manuales con Thunder Client/Postman están en la 1ª entrega.
-Alcance: áreas críticas, 1–5 pruebas por módulo (la cátedra indica que no es necesario ahondar).
+Ejecutar: `npm test` (necesita MongoDB encendido; usa `freshroute_test`, que se borra al terminar).
+- **Unitarias (Jest, Módulo 13):** `npm run test:unit` — funciones puras, sin base de datos.
+- **Integración (`node:test` + `socket.io-client`):** `npm run test:integration` — API, seguridad y WebSockets reales.
+La cátedra indica que no es necesario ahondar: se cubren las áreas críticas, con 1–5 pruebas por módulo. Las pruebas manuales con Thunder Client están en la 1ª entrega.
 
-| N° | Módulo | Objetivo | Procedimiento | Resultado esperado |
-|---|---|---|---|---|
-| T1 | Auth | Login válido | POST login con credenciales correctas | 200, rol, sin password |
-| T2 | Auth | Clave incorrecta | POST login con clave mala | 401 |
-| T3 | Auth | API protegida | GET /api/clientes sin `x-usuario-id` | 401 |
-| T4 | Roles | Directivo solo lee | Directivo hace POST /api/clientes | 403 |
-| T5 | Roles | Depósito no administra clientes | Depósito hace POST /api/clientes | 403 |
-| T6 | Roles | Planificador gestiona repartidores, no productos | POST repartidor / POST producto | 201 / 403 |
-| T7 | Validación | Middleware | POST cliente con campos vacíos y email inválido | 400 + lista de errores |
-| T8 | Roles | Historial restringido | Administrativo pide `?incluirInactivos=true` | 403 |
-| T9 | Roles | Usuarios solo del administrador | GET /api/usuarios con directivo / administrador | 403 / 200 |
-| T9b | Usuarios | Usuario repartidor exige vínculo | POST usuario rol repartidor sin repartidor / con uno ya vinculado | 400 / 409 |
-| T9d | Validación | Política de contraseña (backend) | POST usuario con claves débiles (corta, sin mayúscula, sin minúscula, sin especial) y con una válida | 400 con error en `password` / 201 |
-| T9e | Base de datos | Última capa: el esquema valida solo | `Usuario.create` con clave débil y `Cliente.create` con email sin `@`, salteando la API | `ValidationError` |
-| T9c | Roles | Repartidor sin acceso a datos de oficina | Repartidor hace GET clientes, productos y repartidores | 403 |
-| T10 | Baja lógica | No se borra; reactiva solo el administrador | Baja; lista de activos; historial del directivo; reactivar | 200 / ausente / presente / 403 y 200 |
-| T11 | Clientes | Unicidad | POST con email repetido | 409 |
-| T12 | Pedidos | Regla: ≥1 producto | POST con `items: []` | 400 |
-| T13 | Pedidos | Existencia relacionada | POST con cliente inexistente | 404 |
-| T14 | Pedidos | Depósito no crea pedidos | POST pedido con depósito | 403 |
-| T15 | Pedidos | Alta y pasos por rol | POST válido; GET con depósito y con planificador | Pendiente, total 300; depósito ve [Preparado], planificador ve [] |
-| T16 | Pedidos | Transición inválida | Pendiente → Entregado | 409 |
-| T17 | Pedidos | Rol equivocado | Planificador prepara / depósito despacha | 403 / 403 (depósito prepara: 200) |
-| T18 | Pedidos | Repartidor obligatorio | Preparado → En camino sin repartidor | 400 |
-| T19 | Pedidos | Entrega la confirma el repartidor | En camino ocupa al repartidor; el planificador intenta Entregado; lo hace el repartidor | disponible false; 403; 200 y disponible true |
-| T20 | Pedidos | Estado final | Entregado → Pendiente | 409 |
-| T21 | Pedidos | Repartidor ocupado | Despachar otro pedido con el mismo repartidor | 409 |
-| T21b | Pedidos | Repartidor ve solo lo suyo | GET /api/pedidos con repartidor y con otro repartidor | solo los suyos / lista vacía; paso permitido: [Entregado] |
-| T21c | Pedidos | No toca pedidos ajenos | Otro repartidor hace GET y PATCH Entregado | 403 y 403 |
-| T21d | Pedidos | Repartidor no crea, prepara ni despacha | POST pedido; PATCH Preparado | 403 y 403 |
-| T21e | Pedidos | Repartidor cierra su entrega | PATCH Entregado sobre su pedido | 200; repartidor libre |
-| T22 | Pedidos | Cancelado no se envía | Cancelar y luego En camino | 409 |
-| T23 | Pedidos | Consultas | GET ?cliente=&estado= | 200, 2 resultados (ambos Entregado) |
-| T24 | Auditoría | Trazabilidad y permiso | GET auditoría con directivo / depósito | ≥5 registros / 403 |
+## Unitarias (22)
+| Archivo | Qué verifica |
+|---|---|
+| `unit/reglas.test.js` | Política de contraseña (3 válidas, 6 inválidas) y email con arroba |
+| `unit/transiciones.test.js` | Estados finales sin salida; cada rol ve solo sus pasos; Entregado no vuelve a Pendiente |
+| `unit/auth.service.test.js` | Hash PBKDF2 con sal (verifica, no es la clave, sal distinta); JWT firma, lleva solo el id y rechaza alteraciones |
 
-Última ejecución: **32 de 32 aprobadas**.
+## Integración (43)
+| Grupo | Qué verifica | Resultado esperado |
+|---|---|---|
+| Auth (T1–T3) | Login válido sin password; clave incorrecta; API sin sesión | 200 / 401 / 401 |
+| Seguridad (S1–S6) | Cookie `httpOnly` y token fuera del cuerpo; clave **hasheada** con sal distinta por usuario; token adulterado y `x-usuario-id` viejo; páginas protegidas (302 a `/login` o `/panel`); usuario dado de baja pierde acceso; logout borra cookie | según cada caso |
+| WebSockets (W1–W5) | Sin sesión no conecta; el nombre lo pone el servidor (no se puede suplantar); `@gemini` sin clave avisa; mensajes vacíos/largos se rechazan; aviso `pedido:actualizado` | según cada caso |
+| Roles y validaciones (T4–T9e) | Directivo/depósito/planificador sin permiso → 403; body inválido → 400 con lista; política de clave en backend; la **base de datos** rechaza clave débil y email sin `@` aunque se saltee la API; repartidor sin acceso a clientes/productos | 403 / 400 / `ValidationError` |
+| Baja lógica (T10–T11) | La baja no borra; el directivo ve inactivos; solo el administrador reactiva; email duplicado → 409 | 200 / 403 / 409 |
+| Pedidos (T12–T23) | Sin productos (400); cliente inexistente (404); alta Pendiente con total; transición inválida (409); rol equivocado (403); repartidor obligatorio (400), ocupado (409) y liberado; Entregado no vuelve a Pendiente; Cancelado no se envía; el repartidor ve y cierra solo lo suyo | según cada caso |
+| Auditoría (T24) | Los cambios de estado quedan registrados; el depósito no la consulta | 200 / 403 |
+
+Última ejecución: **22 unitarias y 43 de integración aprobadas (65 en total)**.

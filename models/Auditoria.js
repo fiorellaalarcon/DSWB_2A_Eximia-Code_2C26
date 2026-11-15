@@ -19,4 +19,7 @@ const auditoriaSchema = new mongoose.Schema(
   { timestamps: { createdAt: "fecha", updatedAt: false } }
 );
 
+auditoriaSchema.index({ fecha: -1 }); // el listado siempre ordena por fecha descendente
+auditoriaSchema.index({ entidad: 1, accion: 1, fecha: -1 }); // filtros de la pantalla de auditoria
+
 export const Auditoria = mongoose.model("Auditoria", auditoriaSchema);
