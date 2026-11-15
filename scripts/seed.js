@@ -3,11 +3,9 @@
 // ============================================================
 // Uso:  npm run seed
 // BORRA las colecciones y las vuelve a crear con datos de ejemplo
-// (incluye los 3 usuarios, uno por rol). Reemplaza a los archivos
-// data/*.json de la 1ra entrega.
-// Cumplen la politica (8+ caracteres, mayuscula, minuscula y caracter especial).
-// Las contrasenas estan en texto plano A PROPOSITO (limitacion
-// documentada de esta entrega: todavia no hay hash).
+// (incluye un usuario por rol). Reemplaza a los archivos data/*.json de la 1ra entrega.
+// Las contrasenas se guardan HASHEADAS (PBKDF2 + sal) por el modelo Usuario; aqui se escriben en claro
+// solo para poder iniciar sesion de prueba. Cumplen la politica (8+ caracteres, mayuscula, minuscula y caracter especial).
 // ============================================================
 import "dotenv/config";
 import mongoose from "mongoose";
@@ -18,6 +16,13 @@ import { Producto } from "../models/Producto.js";
 import { Repartidor } from "../models/Repartidor.js";
 import { Pedido } from "../models/Pedido.js";
 import { Auditoria } from "../models/Auditoria.js";
+
+// SEGURIDAD: este script BORRA las colecciones. Contra una base remota (Atlas) exige --force
+// para no borrar datos reales por error:  npm run seed -- --force
+if (process.env.MONGO_URI?.startsWith("mongodb+srv") && !process.argv.includes("--force")) {
+  console.error("MONGO_URI apunta a una base remota (Atlas). Esto borra TODOS los datos. Si es lo que desea: npm run seed -- --force");
+  process.exit(1);
+}
 
 await conectarDB();
 
