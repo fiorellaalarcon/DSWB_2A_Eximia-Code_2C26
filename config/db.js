@@ -8,12 +8,15 @@
 // La URI viene de la variable de entorno MONGO_URI (archivo .env),
 // asi no hay credenciales escritas en el codigo (buena practica) y
 // pasar de Compass/local a Atlas (3ra entrega) es cambiar una linea.
+//
+// 3ra entrega: la MISMA funcion conecta a MongoDB Atlas (mongodb+srv://...).
 // ============================================================
 import mongoose from "mongoose";
 
 export const conectarDB = async (uri = process.env.MONGO_URI) => {
   try {
-    await mongoose.connect(uri);
+    // serverSelectionTimeoutMS: si Atlas no responde (IP bloqueada, clave mal), falla en 10 s en vez de colgarse.
+    await mongoose.connect(uri, { serverSelectionTimeoutMS: 10000 });
     console.log("MongoDB conectado:", mongoose.connection.name);
   } catch (error) {
     console.error("No se pudo conectar a MongoDB:", error.message);
