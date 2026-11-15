@@ -73,4 +73,10 @@ const pedidoSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// INDICES (mejora de rendimiento en la 3ra entrega): sin ellos, cada filtro recorre
+// TODA la coleccion. Estos cubren las consultas reales del sistema:
+pedidoSchema.index({ cliente: 1, estado: 1 }); // consulta por cliente y estado
+pedidoSchema.index({ repartidor: 1, estado: 1 }); // "mis pedidos" del repartidor
+pedidoSchema.index({ estado: 1, createdAt: -1 }); // listado por estado, mas recientes primero
+
 export const Pedido = mongoose.model("Pedido", pedidoSchema);
