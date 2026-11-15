@@ -38,3 +38,46 @@ tr.inactivo td:last-child, tr.inactivo td:nth-last-child(2), tr.inactivo td:nth-
 .nota { font-size:.85rem; color:#5b6670; }
 .site-footer { text-align:center; font-size:.8rem; color:#5b6670; padding:1rem 0; }
 [hidden] { display:none !important; }
+/* ============================================================
+   3ra ENTREGA - Mejoras de presentacion (UX/UI)
+   Encabezado con logo 96x96, navegacion, chat y diseno adaptable (movil)
+   ============================================================ */
+.header-flex { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.marca { display: flex; align-items: center; gap: .9rem; color: #fff; text-decoration: none; }
+.logo { width: 96px; height: 96px; border-radius: 10px; object-fit: cover; flex-shrink: 0; }
+.marca-texto { display: flex; flex-direction: column; }
+.marca-texto strong { font-size: 1.6rem; font-family: Cambria, Georgia, serif; }
+.marca-texto small { opacity: .8; }
+.site-header { padding: .6rem 0; }
+#menu { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+#menu a[aria-current="page"] { background: rgba(255,255,255,.25); font-weight: 600; }
+#menu button { background: #fff; color: var(--azul); font-weight: 600; }
+.btn-menu { display: none; background: #fff; color: var(--azul); font-weight: 600; }
+.solo-lectores { position: absolute; left: -9999px; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid var(--naranja, #f29e1f); outline-offset: 2px; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+tbody tr:hover { background: #f3f8f8; }
+
+/* Chat */
+.chat-historial { height: 340px; overflow-y: auto; border: 1px solid var(--borde); border-radius: 8px; padding: .6rem; background: #fafcfc; display: flex; flex-direction: column; gap: .5rem; }
+.chat-mensaje { max-width: 85%; padding: .45rem .7rem; border-radius: 10px; background: #e9eef0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.chat-autor { font-size: .8rem; margin-bottom: .15rem; }
+.mensaje-propio { align-self: flex-end; background: #d4f1ee; }
+.mensaje-ia { align-self: flex-start; background: #fff3d6; border: 1px solid #f2c14e; }
+.chat-form { display: flex; gap: .5rem; margin-top: .7rem; }
+.chat-form input { flex: 1; }
+
+/* Adaptable a dispositivos moviles */
+@media (max-width: 720px) {
+  .logo { width: 64px; height: 64px; } /* el logo se reduce en pantallas chicas para dejar lugar al contenido */
+  .btn-menu { display: inline-block; }
+  #menu { display: none; flex-direction: column; align-items: stretch; width: 100%; }
+  #menu.abierto { display: flex; }
+  #menu a, #menu button { padding: .7rem; }
+  .usuario-info { margin-left: 0; }
+  .campo { max-width: 100%; }
+  .filtros { flex-direction: column; gap: 0; }
+  .fila-item { flex-wrap: wrap; }
+  .chat-historial { height: 280px; }
+  main h2 { font-size: 1.3rem; }
+}
