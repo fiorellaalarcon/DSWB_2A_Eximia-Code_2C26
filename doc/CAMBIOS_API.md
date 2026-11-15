@@ -1,6 +1,17 @@
-# Cambios de la API respecto de la primera entrega
+# Cambios de la API entre entregas
 
-La primera entrega no tenía autenticación. Ahora **todas las rutas de `/api` (salvo `POST /api/auth/login`) exigen el encabezado `x-usuario-id`**.
+## Tercera entrega (v1.1.3) — autenticación por cookie JWT
+- **Ya no se usa el encabezado `x-usuario-id`** (podía falsificarse). `POST /api/auth/login` responde con una cookie **`httpOnly`** que contiene un JWT firmado; el navegador la envía sola en cada solicitud. Para probar con herramientas externas, reenviar la cookie `token`.
+- Rutas nuevas de autenticación: `POST /api/auth/logout` y `GET /api/auth/yo` (ambas exigen sesión).
+- `GET /health` (pública): estado de la aplicación, para el despliegue.
+- Las **páginas** (`/panel`, `/clientes`, `/pedidos`, `/chat`…) ahora exigen sesión y rol en el servidor: sin sesión redirigen a `/login`.
+- Nueva página `/chat` y conexión **Socket.IO** (eventos `mensaje`, `historial`, `conectados`, `aviso` y `pedido:actualizado`); exige la misma cookie.
+- Los usuarios se guardan con `passwordHash` y `salt`; **ninguna respuesta los incluye**.
+- Mismos endpoints de negocio y mismos cuerpos que en la 2ª entrega.
+
+## Segunda entrega (v2.0.0)
+
+La primera entrega no tenía autenticación. Ahora todas las rutas de `/api` (salvo `POST /api/auth/login`) exigían el encabezado `x-usuario-id` (reemplazado en la 3ª entrega).
 Por eso las pruebas de Thunder Client/Postman de la primera entrega deben agregar ese encabezado y usar los nuevos nombres de campos.
 
 ## Rutas
