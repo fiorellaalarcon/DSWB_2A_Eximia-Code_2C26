@@ -1,9 +1,6 @@
-// Pagina de login: envia usuario/clave con fetch y, si es correcto, guarda el usuario y entra al panel.
+// Pagina de login: envia usuario/clave con fetch; si es correcto el servidor deja la cookie con el JWT y se entra al panel.
 import { api } from "./api.js";
-import { guardarUsuario, obtenerUsuario } from "./auth.js";
 import { mostrarErrores, mostrarMensaje } from "./ui.js";
-
-if (obtenerUsuario()) location.href = "/panel"; // ya ingreso antes
 
 document.getElementById("formLogin").addEventListener("submit", async (e) => {
   e.preventDefault(); // sin recargar la pagina
@@ -15,8 +12,7 @@ document.getElementById("formLogin").addEventListener("submit", async (e) => {
   }
   const datos = Object.fromEntries(new FormData(e.target));
   try {
-    const respuesta = await api.post("/api/auth/login", datos);
-    guardarUsuario(respuesta.usuario);
+    await api.post("/api/auth/login", datos); // el servidor responde con la cookie httpOnly (JWT)
     location.href = "/panel";
   } catch (error) {
     mostrarErrores(error.errores);
