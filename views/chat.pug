@@ -1,0 +1,17 @@
+extends layout
+
+block content
+  section.tarjeta
+    p.nota
+      | Chat interno de operaciones, en tiempo real. Para consultar al asistente de IA escriba
+      |  <strong>@gemini</strong> seguido de su pregunta (por ejemplo: <em>@gemini ¿cuántos pedidos hay pendientes?</em>).
+    p#conectados.nota Conectando…
+    #historial.chat-historial(aria-live="polite")
+    form#formChat.chat-form(novalidate)
+      label.solo-lectores(for="textoChat") Mensaje
+      input#textoChat(type="text", maxlength="500", autocomplete="off", placeholder="Escriba un mensaje…")
+      button(type="submit") Enviar
+
+block scripts
+  script(src="/socket.io/socket.io.js")
+  script(type="module", src="/js/chat.js")

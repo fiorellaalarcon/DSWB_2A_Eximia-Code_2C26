@@ -1,11 +1,11 @@
 // ============================================================
 // API.JS (navegador) - envoltorio de fetch()
 // ============================================================
-// Centraliza: encabezado JSON, id de usuario, y el manejo de
-// respuestas HTTP. fetch() NO lanza error con un 400/404/409/500
+// Centraliza: encabezado JSON y el manejo de respuestas HTTP. La sesion
+// (cookie httpOnly con el JWT) la envia el navegador automaticamente en cada fetch
+// del mismo sitio; ya no hace falta mandar el id del usuario a mano. fetch() NO lanza error con un 400/404/409/500
 // (solo si falla la red), por eso se revisa res.ok a mano.
 // ============================================================
-import { obtenerUsuario, cerrarSesion } from "./auth.js";
 
 export class ErrorApi extends Error {
   constructor(mensaje, status, errores) {
@@ -16,14 +16,12 @@ export class ErrorApi extends Error {
 }
 
 async function pedir(metodo, url, cuerpo) {
-  const usuario = obtenerUsuario();
   let res;
   try {
     res = await fetch(url, {
       method: metodo,
       headers: {
         "Content-Type": "application/json",
-        ...(usuario && { "x-usuario-id": usuario.id }),
       },
       body: cuerpo !== undefined ? JSON.stringify(cuerpo) : undefined,
     });
@@ -36,7 +34,7 @@ async function pedir(metodo, url, cuerpo) {
 
   if (!res.ok) {
     // 401 fuera del login = usuario inexistente/dado de baja -> volver a ingresar.
-    if (res.status === 401 && !url.includes("/api/auth/login")) cerrarSesion();
+    if (res.status === 401 && !url.includes("/api/auth/login")) location.href = "/login"; // sesion vencida
     throw new ErrorApi(datos.error || "Error inesperado.", res.status, datos.errores);
   }
   return datos;
