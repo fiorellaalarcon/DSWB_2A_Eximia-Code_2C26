@@ -174,6 +174,39 @@ Además de la asistencia utilizada durante el desarrollo, FreshRoute incorpora G
 
 Esta integración es independiente del uso de IA como herramienta de desarrollo. Su comportamiento está definido por un prompt propio, que establece el rol del asistente, el tipo de información que puede utilizar y las restricciones para evitar respuestas inventadas o solicitudes de datos sensibles. La conexión real depende de la configuración de `GEMINI_API_KEY` y de la disponibilidad del servicio.
 
+# Prompts de IA · Logo
+
+Este documento registra los prompts utilizados como apoyo en la generación y revisión del recurso visual del proyecto. La IA se utilizó como herramienta asistida: el equipo seleccionó, revisó y adaptó los resultados antes de incorporarlos al sitio.
+- IA utilizada, modelo:
+- **Google AI Studio (Gemini 3.1 Flash Image / Nano Banana 2) para recursos visuales.**. 
+- **Plan:** gratuito.
+Se utilizó para:
+- Generar la imagen del logo.
+
+> **Criterio de autoría:** un recurso generado con IA no se incorporó automáticamente. Se evaluaron coherencia visual, legibilidad, relación con la identidad de Eximia Code, adaptación al tamaño de uso y consistencia entre páginas.
+
+
+## Prompt base para el logo
+
+> Diseñar un logo profesional y minimalista para un equipo ficticio de desarrollo de software llamado “Eximia Code”. La identidad debe combinar tecnología, software, datos, logística inteligente, planificación de rutas y trazabilidad B2B. Crear un símbolo de X simple, geométrico y reconocible a tamaño pequeño. Estética tecnológica corporativa, moderna y sobria, sin apariencia infantil, con formas limpias y buena legibilidad. 
+>La propuesta debe funcionar tanto sobre fondo claro como sobre fondo oscuro y mantener una identidad visual coherente para un sitio web académico.Colores sugeridos: Utilizar una paleta tecnológica y corporativa, preferentemente basada en: azul oscuro o azul petróleo, asociado con confianza y tecnología; verde o turquesa como color de acento, asociado con eficiencia, movimiento y trazabilidad; blanco o gris claro para contraste. 
+>También puede incorporarse un tono oscuro neutro para reforzar la identidad profesional.  paleta debe ser sobria, moderna y armónica, adecuada para una empresa de software B2B.Composición: Crear un isotipo compacto que combine visualmente una ruta, nodos de conexión y un punto de destino, integrado con algún detalle sutil de código.
+
+
+## 5. Revisión posterior a la generación
+
+Después de generar los recursos, el equipo revisó:
+- coherencia con el concepto de Eximia Code;
+- legibilidad del logo en tamaños pequeños;
+- consistencia visual.
+- comportamiento sobre fondo claro y oscuro;
+- peso y dimensiones antes de convertir los recursos a WebP;
+- En el logo se agregó un borde blanco y se quitó el fondo, con Microsft Paint.
+
+## 6. Uso responsable de IA
+La IA se utilizó como apoyo para explorar alternativas y acelerar tareas de diseño/revisión. La decisión final sobre qué recurso utilizar, cómo integrarlo, qué textos conservar y qué modificaciones realizar correspondió al equipo.
+
+
 ### Referencias y recursos externos
 
 - **Claude (Anthropic):** https://claude.ai/
