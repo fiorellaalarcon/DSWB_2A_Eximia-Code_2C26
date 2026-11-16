@@ -7,10 +7,12 @@ https://drive.google.com/drive/folders/1DIdFfikiBLpY_M7adQ7gS02nxS6y_cJL?usp=sha
 •	GitHub: 
 https://github.com/fiorellaalarcon/DSWB_2A_Eximia-Code_2C26
 
+•	Render: https://dswb-2a-eximia-code-2c26.onrender.com/panel
+
 •	Link al Video de las entregas:
 1° parcial: https://drive.google.com/file/d/13FJ2l6Ig-kQTDpDHzRFaP_HdFP51kCij/view?usp=sharing
 2° parcial: https://drive.google.com/file/d/1IhBv8rT4i2CVdOwhDH4SutLOmAwW8mAm/view?usp=sharing
-3° parcial: 
+3° parcial: https://drive.google.com/drive/folders/14CS3oDIQW3I6h8QajYDWxN10KtboQ4GO?usp=sharing
 
 ### Integrantes
 - Alarcón, Fiorella Melina
